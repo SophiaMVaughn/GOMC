@@ -110,6 +110,14 @@ public:
     }
   }
 
+  //Used to pick first position of
+  void FillWithRandomInCavity(XYZ &loc, const double rmax, XYZ const& center)
+  {
+    XYZ temp(center.x + SymExc(rmax), center.y + SymExc(rmax), center.z +
+		    SymExc(rmax));
+    loc = temp;
+  }
+
   void FillWithRandomOnSphere(XYZArray & loc, const uint len,
                               const double rAttach, const XYZ& center)
   {
@@ -165,6 +173,17 @@ public:
     return -1;
   }
 
+  void PickBool(bool &b, const double subDraw, const double movPerc) const
+  {
+    //Calculate "chunk" of move for each box.
+    double boxDiv = movPerc / 2;
+    //Which chunk was our draw in...
+    b = (uint)(subDraw/boxDiv);
+    //FIXME: Hack to prevent picking invalid boxes, may violate balance
+    if (b != mv::BOX0)
+      b = mv::BOX1;
+    b = (b > 0 ? true : false);
+  }
 
   void PickBox(uint &b,
                const double subDraw, const double movPerc) const
@@ -356,9 +375,9 @@ public:
     return rejectState;
   }
 
-   // used in Identity Exchange move
-  uint PickMol(uint &m, uint &m2, uint & mk, uint &mk2, const uint b,
-	       const uint dest, const double subDraw, const double subPerc)
+  // used in Identity Exchange move
+  uint PickMol(const uint mk, std::vector<uint> &mk2,
+	       std::vector<uint> &m2, const uint n, const uint b)
   {
     uint rejectState = mv::fail_state::NO_FAIL;
     uint mkTot = molLookRef.GetNumKind();
@@ -368,62 +387,58 @@ public:
       std::cout << "Error: ID_Exchange move is not possible for pure system.\n";
       exit(EXIT_FAILURE);
     }
+    
+    mk2.resize(n);
+    uint MK2;
 
-    double molDiv = subPerc/mkTot;
-    //Which molecule kind chunk are we in?
-    mk = (uint)(subDraw/molDiv);
-    
-    //clamp if some rand err.
-    if (mk == mkTot)
-      mk = mkTot -1;
-    
     if(mkTot == 2)
     {
       if(mk == 0)
-	mk2 = 1;
+	MK2 = 1;
       else
-	mk2 = 0;
+	MK2 = 0;
     }
     else
     {
       //find the other ID pair
-      mk2 = mk;
-      while(mk2 == mk)
+      MK2 = mk;
+      while(MK2 == mk)
       {
-	mk2 = randIntExc(mkTot);
+	MK2 = randIntExc(mkTot);
       }
     }
+    std::fill(mk2.begin(), mk2.end(), MK2);
 
     //Pick molecule with the help of molecule lookup table.
-    if (molLookRef.NumKindInBox(mk, b) == (molLookRef.GetNoSwapInBox(mk, b) +
-					   molLookRef.GetFixInBox(mk, b)))
+    if (molLookRef.NumKindInBox(MK2, b) <
+	(molLookRef.GetNoSwapInBox(MK2, b) +
+	 molLookRef.GetFixInBox(MK2, b) + n))
     {
       rejectState = mv::fail_state::NO_MOL_OF_KIND_IN_BOX;
     }
-    else if (molLookRef.NumKindInBox(mk2, dest) ==
-	     (molLookRef.GetNoSwapInBox(mk2, dest) +
-	      molLookRef.GetFixInBox(mk2, dest)))
-    {
-      rejectState = mv::fail_state::NO_MOL_OF_KIND_IN_BOX;
-    }
-    else if (molLookRef.NumKindInBox(mk, b) == 0 || 
-	     molLookRef.NumKindInBox(mk2, dest) == 0)
+    else if (molLookRef.NumKindInBox(MK2, b) < n)
     {
       rejectState = mv::fail_state::NO_TWO_MOLECULE_KIND;
     }
     else
     {
-      //Among the ones of that kind in that source box, pick one @ random.
-      uint mOff = randIntExc(molLookRef.NumKindInBox(mk, b));
-      //Lookup true index in table.
-      m = molLookRef.GetMolNum(mOff, mk, b);
-      //Among the ones of that kind in that dest box, pick one @ random.
-      uint mOff2 = randIntExc(molLookRef.NumKindInBox(mk2, dest));
-      //Lookup true index in table.
-      m2 = molLookRef.GetMolNum(mOff2, mk2, dest);
+      for(uint i = 0; i < n; i++)
+      {
+	//Among the ones of that kind in that dest box, pick one @ random.
+	uint mOff2 = randIntExc(molLookRef.NumKindInBox(MK2, b));
+	//Lookup true index in table.
+	uint M2 = molLookRef.GetMolNum(mOff2, MK2, b);
+	while(std::find(m2.begin(), m2.end(), M2) != m2.end())
+	{
+	  mOff2 = randIntExc(molLookRef.NumKindInBox(MK2, b));
+	  M2 = molLookRef.GetMolNum(mOff2, MK2, b);
+	}
+	m2.push_back(M2);
+      }
     }
     return rejectState;
   }
+
 
   // pick a molecule that is not fixed (beta != 1)
   uint PickMolAndBoxPair(uint &m, uint &mk, uint & bSrc, uint & bDest,
@@ -441,15 +456,6 @@ public:
     double boxDiv=0;
     PickBoxPair(bSrc, bDest, boxDiv, subDraw, movPerc);
     return PickMol2(m, mk, bSrc, subDraw, boxDiv);
-  }
-
-  // used in Identity Exchange move
-  uint PickMolAndBoxPair(uint &m, uint &m2, uint &mk, uint &mk2, uint &bSrc,
-			 uint &bDest, double subDraw, const double movPerc)
-  {
-    double boxDiv=0;
-    PickBoxPair(bSrc, bDest, boxDiv, subDraw, movPerc);
-    return PickMol(m, m2, mk, mk2, bSrc, bDest, subDraw, boxDiv);
   }
 
   uint PickMolAndBox(uint & m, uint &mk, uint &b,

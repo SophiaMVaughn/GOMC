@@ -17,12 +17,17 @@ namespace cbmc
  
    void DCRotateCOM::PrepareNew(TrialMol& newMol, uint molIndex) 
    { 
+     PRNG& prng = data->prng;
      newMol.SetWeight(1.0);
      atomNumber = newMol.GetCoords().Count();
      //old center of mass
      XYZ oldCOM = newMol.GetCOM();
-     //new center of mass that need to be transfered
-     COM = newMol.GetSeed();
+     //new center of mass that need to be transfered 
+     if(!newMol.HasSeed())
+       COM = newMol.GetSeed();
+     else
+       prng.FillWithRandomInCavity(COM, newMol.GetRmax(), newMol.GetSeed());
+
      XYZ diff = COM - oldCOM;
      
      for(uint p = 0; p < atomNumber; p++)
@@ -39,6 +44,7 @@ namespace cbmc
      XYZ oldCOM = oldMol.GetCOM();
      //new center of mass that need to be transfered
      COM = oldMol.GetSeed();
+
      XYZ diff = COM - oldCOM;
      
      for(uint p = 0; p < atomNumber; p++)
@@ -46,7 +52,6 @@ namespace cbmc
        oldMol.SetAtomCoords(p, oldMol.AtomPosition(p) + diff);
      }
    } 
- 
  
    void DCRotateCOM::BuildNew(TrialMol& newMol, uint molIndex) 
    { 
@@ -88,9 +93,9 @@ namespace cbmc
             RotationMatrix::UniformRandom(prng(), prng(), prng()); 
          for (uint p = 0; p < atomNumber; ++p) 
          { 
-               //find positions 
-               positions[p].Set(lj, spin.Apply(positions[p][0])); 
-               positions[p].Add(lj, center); 
+	   //find positions 
+	   positions[p].Set(lj, spin.Apply(positions[p][0])); 
+	   positions[p].Add(lj, center); 
          } 
       } 
  

@@ -76,7 +76,7 @@ public:
     return ((fixedAtom[m] == 1) && (fixedAtom[n] == 1));
   }
 
-  bool IsNoSwap(const uint m)
+  bool IsNoSwap(const uint m) const
   {
     return (fixedAtom[m] >= 1);
   }

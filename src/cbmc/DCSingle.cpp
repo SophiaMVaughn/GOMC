@@ -21,20 +21,10 @@ namespace cbmc
       std::fill_n(inter, nLJTrials, 0.0);  
       std::fill_n(real, nLJTrials, 0.0); 
  
-      if(oldMol.HasSeed())
-      {
-	//nLJTrials = 1;
-	prng.FillWithRandomInCavity(positions, nLJTrials, oldMol.GetRmax(), 
-				    oldMol.GetSeed());
-	positions.Set(0, oldMol.AtomPosition(atom));
-	data->axes.WrapPBC(positions, oldMol.GetBox());
-      }
-      else
-      {
-	prng.FillWithRandom(positions, nLJTrials, 
+      prng.FillWithRandom(positions, nLJTrials, 
 			    data->axes.GetAxis(oldMol.GetBox())); 
-	positions.Set(0, oldMol.AtomPosition(atom));
-      }
+      positions.Set(0, oldMol.AtomPosition(atom));
+   
       data->calc.ParticleInter(inter, real, positions, atom, molIndex, 
                                oldMol.GetBox(), nLJTrials);  
  
@@ -62,18 +52,8 @@ namespace cbmc
       std::fill_n(real, nLJTrials, 0.0); 
       std::fill_n(ljWeights, nLJTrials, 0.0); 
  
-      if(newMol.HasSeed())
-      {
-	//nLJTrials = 1;
-	prng.FillWithRandomInCavity(positions, nLJTrials, newMol.GetRmax(), 
-				    newMol.GetSeed());
-	data->axes.WrapPBC(positions, newMol.GetBox());
-      }
-      else
-      {
-	prng.FillWithRandom(positions, nLJTrials, 
-			    data->axes.GetAxis(newMol.GetBox())); 
-      }
+      prng.FillWithRandom(positions, nLJTrials, 
+			  data->axes.GetAxis(newMol.GetBox())); 
 
       data->calc.ParticleInter(inter, real, positions, atom, molIndex, 
                                newMol.GetBox(), nLJTrials);

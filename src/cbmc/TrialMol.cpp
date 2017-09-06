@@ -218,6 +218,12 @@ void TrialMol::SetSeed(const XYZ& coords, const double rmax)
   seedToGrow = true;
 }
 
+void TrialMol::SetSeed(const XYZ& coords)
+{
+  sCoords = coords;
+  seedToGrow = false;
+}
+
 XYZ TrialMol::GetCOM()
 {
   XYZ tcom;
