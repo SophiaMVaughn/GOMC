@@ -278,13 +278,13 @@ void ConfigSetup::Init(const char *fileName)
     {
       sys.ff.rswitch = stringtod(line[1]);
     }
-    else if(line[0] == "Rmax")
+    else if(line[0] == "CavityLength")
     {
       if(line.size() == 2)
       {
 	sys.exchangeVal.rmax = stringtod(line[1]);
-	printf("%-40s %-4.4f A\n", "Info: Cavity Length",
-	       2.0 * sys.exchangeVal.rmax);
+	printf("%-40s %-4.4f A\n", "Info: Exchange Cavity Length",
+	       sys.exchangeVal.rmax);
       }
     }
     else if(line[0] == "Exchange")

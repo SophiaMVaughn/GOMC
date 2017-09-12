@@ -20,9 +20,11 @@ class IdentityExchange : public MoveBase
 
    IdentityExchange(System &sys, StaticVals const& statV) :
     ffRef(statV.forcefield), molLookRef(sys.molLookupRef),
-      MoveBase(sys, statV), rmax(statV.mol.kinds[0].rmax) 
+      MoveBase(sys, statV), rmax(statV.mol.kinds[0].rmax / 2.0) 
       {
-	enableID = ffRef.enableID;
+	enableID = ffRef.enableID;	
+	volCav = pow(2.0 * rmax, 3);
+
 	if(enableID)
 	{
 	  uint kindSnum = 0;
@@ -93,7 +95,7 @@ class IdentityExchange : public MoveBase
    bool insertB, enableID;
    uint numInCavA, numInCavB, exchangeRate, kindS, kindL;
 
-   double rmax;
+   double rmax, volCav;
    XYZ center;
    double W_tc, W_recip;
    double correct_oldA, correct_newA, self_oldA, self_newA;
@@ -473,7 +475,6 @@ inline double IdentityExchange::GetCoeff() const
   double numTypeBDest = molLookRef.NumKindInBox(kindIndexB[0], destBox);
   double volSource = boxDimRef.volume[sourceBox];
   double volDest = boxDimRef.volume[destBox];
-  double volCav = pow(2 * rmax, 3);
 #if ENSEMBLE == GEMC
   if(insertB)
   {
