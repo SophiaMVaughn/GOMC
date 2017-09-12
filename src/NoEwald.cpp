@@ -105,10 +105,17 @@ double NoEwald::MolCorrection(uint molIndex, uint box) const
 
 //calculate reciprocate term in destination box for swap move
 double NoEwald::SwapDestRecip(const cbmc::TrialMol &newMol,
-			      const uint box, const int sourceBox,
-			      const int molIndex) 
+			      const uint box, const int molIndex) 
 {
    return 0.0;
+}
+
+//calculate reciprocate term for inserting some molecules kind A in destination
+// box and removing molecule kind B from dest box
+double NoEwald::SwapRecip(const std::vector<cbmc::TrialMol> &newMol,
+			  const std::vector<cbmc::TrialMol> &oldMol)
+{
+  return 0.0;
 }
 
 

@@ -46,10 +46,7 @@ namespace cbmc
       //considering bond energy for old molecule. There is no need to calculate 
       //for new molecule since we dont sample bond. 
       SetOldBondEnergy(oldMol); 
-      if(oldMol.HasSeed())
-      {
-	nLJTrials = 1;
-      }
+
       data->prng.FillWithRandomOnSphere(positions, nLJTrials, bondLength, 
 					oldMol.AtomPosition(focus)); 
       positions.Set(0, oldMol.AtomPosition(atom)); 
@@ -82,10 +79,7 @@ namespace cbmc
       std::fill_n(inter, nLJTrials, 0.0);  
       std::fill_n(real, nLJTrials, 0.0);  
       std::fill_n(ljWeights, nLJTrials, 0.0); 
-      if(newMol.HasSeed())
-      {
-	nLJTrials = 1;
-      }
+
       data->prng.FillWithRandomOnSphere(positions, nLJTrials, bondLength, 
 					newMol.AtomPosition(focus)); 
       data->axes.WrapPBC(positions, newMol.GetBox()); 

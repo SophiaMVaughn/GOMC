@@ -55,13 +55,18 @@ class Ewald : public EwaldCached
    virtual double MolReciprocal(XYZArray const& molCoords, const uint molIndex,
 				const uint box, XYZ const*const newCOM = NULL);	
 
-   //calculate reciprocate term in destination box for swap move
+   //calculate reciprocate term for inserting one molecule in destination box
    virtual double SwapDestRecip(const cbmc::TrialMol &newMol, const uint box, 
-				const int sourceBox, const int molIndex);	
+			        const int molIndex);
 
-   //calculate reciprocate term in source box for swap move
+   //calculate reciprocate term for removing one molecule in source box
    virtual double SwapSourceRecip(const cbmc::TrialMol &oldMol,
 				  const uint box, const int molIndex);
+
+   //calculate reciprocate term for inserting some molecules kind A in
+   //destination box and removing molecule kind B from dest box
+   virtual double SwapRecip(const std::vector<cbmc::TrialMol> &newMol,
+			    const std::vector<cbmc::TrialMol> &oldMol);
 
    //restore cosMol and sinMol
    virtual void RestoreMol(int molIndex);

@@ -20,13 +20,15 @@ namespace cbmc {
       DCRotateCOM(DCData* data);
       void PrepareNew(TrialMol& newMol, uint molIndex);
       void PrepareOld(TrialMol& oldMol, uint molIndex);
+      void PickTransferCOMNew(TrialMol& newMol, uint molIndex);
+      void PickTransferCOMOld(TrialMol& oldMol, uint molIndex);
       void BuildOld(TrialMol& oldMol, uint molIndex);
       void BuildNew(TrialMol& newMol, uint molIndex);
       DCComponent* Clone() { return new DCRotateCOM(*this); };
 
    private:
       DCData* data;
-      XYZ COM;
+      XYZ COM, oldCOM;
       uint atomNumber;
    };
 }

@@ -112,7 +112,7 @@ namespace config_setup
    struct FFValues 
    { 
      uint VDW_KIND; 
-     double cutoff, cutoffLow, rswitch, oneFourScale, rmax; 
+     double cutoff, cutoffLow, rswitch, oneFourScale; 
      bool doTailCorr; 
      std::string kind; 
      
@@ -188,7 +188,14 @@ namespace config_setup
      uint ang, dih; 
    }; 
  
-   struct CBMC { GrowNonbond nonbonded; GrowBond bonded; };    
+   struct CBMC { GrowNonbond nonbonded; GrowBond bonded; };   
+
+   struct ExchangeVal 
+   { 
+     bool enable;
+     double rmax;
+     std::map<std::string, uint> exRatio; 
+   };
  
 #if ENSEMBLE == GCMC 
    struct ChemicalPotential 
@@ -197,20 +204,21 @@ namespace config_setup
       std::map<std::string, double> cp; 
    }; 
 #endif 
-	struct SystemVals 
-	{ 
-		ElectroStatic elect; 
-		Temperature T; 
-		FFValues ff; 
-		Exclude exclude; 
-		Step step; 
-		MovePercents moves; 
-		Volume volume; //May go unused 
-		CBMC cbmcTrials; 
+   struct SystemVals 
+   { 
+     ElectroStatic elect; 
+     Temperature T; 
+     FFValues ff; 
+     Exclude exclude; 
+     Step step; 
+     MovePercents moves; 
+     Volume volume; //May go unused 
+     CBMC cbmcTrials; 
+     ExchangeVal exchangeVal;
 #if ENSEMBLE == GCMC 
-		ChemicalPotential chemPot; 
+     ChemicalPotential chemPot; 
 #elif ENSEMBLE == GEMC || ENSEMBLE == NPT
-		GEMCKind gemc; 
+     GEMCKind gemc; 
 #endif 
    }; 
  

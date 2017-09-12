@@ -84,7 +84,8 @@ class MoleculeKind
    double molMass;
    
    double * atomMass;
-  
+   double rmax;
+   uint exchangeRatio;
    
 #if ENSEMBLE == GCMC
    double chemPot;

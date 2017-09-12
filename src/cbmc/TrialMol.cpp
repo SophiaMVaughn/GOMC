@@ -24,13 +24,14 @@ TrialMol::TrialMol(const MoleculeKind& k, const BoxDimensions& ax,
 {
   atomBuilt = new bool[k.NumAtoms()];
   std::fill_n(atomBuilt, k.NumAtoms(), false);
-  seedToGrow = false;
+  seedInCav = false;
+  seedFix = false;
   growthToWorld.LoadIdentity();
 }
 
 TrialMol::TrialMol()
   : kind(NULL), axes(NULL), box(0), tCoords(0), atomBuilt(NULL),
-    seedToGrow(false)
+    seedInCav(false), seedFix(false)
 {
 }
 
@@ -62,8 +63,10 @@ void swap(TrialMol& a, TrialMol& b)
   swap(a.atomBuilt, b.atomBuilt);
   swap(a.growthToWorld, b.growthToWorld);
   swap(a.worldToGrowth, b.worldToGrowth);
-  a.seedToGrow = false;
-  b.seedToGrow = false;
+  a.seedInCav = false;
+  b.seedInCav = false;
+  a.seedFix = false;
+  b.seedFix = false;
 }
 
 TrialMol::~TrialMol()
@@ -211,17 +214,19 @@ void TrialMol::SetCoords(const XYZArray& coords, uint start)
   coords.CopyRange(tCoords, start, 0, tCoords.Count());
 }
 
-void TrialMol::SetSeed(const XYZ& coords, const double rmax)
+  void TrialMol::SetSeed(const XYZ& coords, const double rmax, const bool inCav,
+			 const bool fixCOM)
 {
   sCoords = coords;
   sRmax = rmax;
-  seedToGrow = true;
+  seedInCav = inCav;
+  seedFix = fixCOM;
 }
 
-void TrialMol::SetSeed(const XYZ& coords)
+  void TrialMol::SetSeed(const bool inCav, const bool fixCOM)
 {
-  sCoords = coords;
-  seedToGrow = false;
+  seedInCav = inCav;
+  seedFix = fixCOM;
 }
 
 XYZ TrialMol::GetCOM()

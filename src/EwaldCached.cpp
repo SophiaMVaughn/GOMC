@@ -689,8 +689,7 @@ double EwaldCached::MolCorrection(uint molIndex, uint box) const
 
 //calculate reciprocate term in destination box for swap move
 double EwaldCached::SwapDestRecip(const cbmc::TrialMol &newMol,
-				  const uint box, const int sourceBox,
-				  const int molIndex) 
+				  const uint box, const int molIndex) 
 {
    double energyRecipNew = 0.0; 
    double energyRecipOld = 0.0; 
@@ -746,6 +745,18 @@ double EwaldCached::SwapDestRecip(const cbmc::TrialMol &newMol,
    return energyRecipNew - energyRecipOld;
 }
 
+//calculate reciprocate term for inserting some molecules kind A in destination
+// box and removing molecule kind B from dest box
+double EwaldCached::SwapRecip(const std::vector<cbmc::TrialMol> &newMol,
+			      const std::vector<cbmc::TrialMol> &oldMol)
+{
+  //This function should not be called in IDExchange move
+  std::cout << "Error: Cached Fourier method cannot be used while " << 
+    "performing Identity Exchange move!" << std::endl;
+  exit(0);
+  return 0.0;
+}
+
 
 //calculate reciprocate term in source box for swap move
 double EwaldCached::SwapSourceRecip(const cbmc::TrialMol &oldMol,
@@ -790,6 +801,7 @@ double EwaldCached::SwapSelf(const cbmc::TrialMol& trialMol) const
    }
    return (en_self * alpha * num::qqFact / sqrt(M_PI));
 }
+
 
 //calculate correction term for linear molecule CBMC algorithm
 double EwaldCached::SwapCorrection(const cbmc::TrialMol& trialMol) const

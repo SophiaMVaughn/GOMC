@@ -120,10 +120,12 @@ class TrialMol
       bool AtomExists(uint index) const { return atomBuilt[index]; }
 
       //!Copies 1 atom's worth of coordinates to sCoords
-      void SetSeed(const XYZ& coords, const double rmax);
-      void SetSeed(const XYZ& coords);
+      void SetSeed(const XYZ& coords, const double rmax, const bool inCav,
+		   const bool fixCOM);
+      void SetSeed(const bool inCav, const bool fixCOM);
 
-      bool HasSeed() const {return seedToGrow;}
+      bool HasCav() const {return seedInCav;}
+      bool SeedFix() const {return seedFix;}
       XYZ GetSeed() const {return sCoords;}
       double GetRmax() const {return sRmax;}
       //return unwrap com of tcoords so tcoords need to be set
@@ -143,7 +145,7 @@ class TrialMol
       double totalWeight;
       double sRmax;   //The radius of inserting molecule
       bool* atomBuilt;
-      bool seedToGrow;
+      bool seedInCav, seedFix;
       RotationMatrix growthToWorld;
       RotationMatrix worldToGrowth;
       XYZ basisPoint;

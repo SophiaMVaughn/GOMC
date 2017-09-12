@@ -38,6 +38,8 @@ ConfigSetup::ConfigSetup(void)
   sys.elect.readCache = false;
   sys.elect.ewald = false;
   sys.elect.enable = false;
+  sys.step.pressureCalc = true;
+  sys.exchangeVal.enable = false;
   sys.elect.tolerance = DBL_MAX;
   sys.elect.oneFourScale = DBL_MAX;
   sys.elect.dielectric = DBL_MAX;
@@ -45,7 +47,7 @@ ConfigSetup::ConfigSetup(void)
   sys.step.equil = ULONG_MAX;
   sys.step.adjustment = ULONG_MAX;
   sys.step.pressureCalcFreq = ULONG_MAX;
-  sys.step.pressureCalc = true;
+  sys.exchangeVal.rmax = DBL_MAX;
   in.ffKind.numOfKinds = 0;
   sys.exclude.EXCLUDE_KIND = UINT_MAX;
   in.prng.kind = "";
@@ -278,8 +280,23 @@ void ConfigSetup::Init(const char *fileName)
     }
     else if(line[0] == "Rmax")
     {
-      sys.ff.rmax = stringtod(line[1]);
-      printf("%-40s %-4.4f A\n", "Info: Cavity rmax", sys.ff.rmax);
+      if(line.size() == 2)
+      {
+	sys.exchangeVal.rmax = stringtod(line[1]);
+	printf("%-40s %-4.4f A\n", "Info: Cavity Length",
+	       2.0 * sys.exchangeVal.rmax);
+      }
+    }
+    else if(line[0] == "Exchange")
+    {
+      if(line.size() == 3)
+      {
+	std::string resName = line[1];
+	uint val = stringtoi(line[2]);
+	sys.exchangeVal.exRatio[resName] = val;
+	printf("%-40s %-6d %-6s \n", "Info: Exchange", val,
+	       resName.c_str());
+      }
     }
     else if(line[0] == "Rcut")
     {
@@ -445,6 +462,10 @@ void ConfigSetup::Init(const char *fileName)
       sys.moves.idExchange = stringtod(line[1]);
       printf("%-40s %-4.4f \n", "Info: Identity swap move frequency",
 	     sys.moves.idExchange);
+      if(sys.moves.idExchange > 0.0)
+      {
+	sys.exchangeVal.enable = true;
+      }
     }
 #endif
     else if(line[0] == "BoxDim")
@@ -790,6 +811,7 @@ void ConfigSetup::fillDefaults(void)
 void ConfigSetup::verifyInputs(void)
 {
   int i;
+
   if(!sys.elect.enable && sys.elect.oneFourScale != DBL_MAX)
   {
     printf("Warning: 1-4 Electrostatic scaling set, but will be ignored.\n");
@@ -808,6 +830,12 @@ void ConfigSetup::verifyInputs(void)
 	   "Warning: Electrostatic calculation with Ewlad method", "Inactive");
   }
 
+  if(sys.exchangeVal.enable &&  (sys.exchangeVal.rmax == DBL_MAX))
+  {
+    std::cout << "Error: Cavity length for Identity exchange move is not specified!" << std::endl;
+    exit(0);
+  }
+  
   // Set output files
   if(out.statistics.settings.uniqueStr.val == "")
   {
@@ -915,6 +943,14 @@ void ConfigSetup::verifyInputs(void)
     std::cout << "Error: Tolerance is not specified!" << std::endl;
     exit(0);
   }
+
+  if(sys.elect.cache && sys.exchangeVal.enable)
+  {
+    std::cout << "Error: Cached Fourier method cannot be used while " << 
+      "performing Identity Exchange move!" << std::endl;
+    exit(0);
+  }
+
   if(sys.step.adjustment == ULONG_MAX)
   {
     std::cout << "Error: Move adjustment frequency is not specified!\n";

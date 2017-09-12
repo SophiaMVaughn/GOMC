@@ -36,6 +36,7 @@ void MoleculeKind::Init
    const mol_setup::MolKind& molData = dataIterator->second;
    name = l_name;
 
+
 #if ENSEMBLE == GCMC
    std::map<std::string, double>::const_iterator kindCPIt =
       setup.config.sys.chemPot.cp.find(name),
@@ -56,8 +57,7 @@ void MoleculeKind::Init
       
       //Print out whatever chemical potentials were read.
       for (kindCPIt = setup.config.sys.chemPot.cp.begin();
-	   kindCPIt != lastOne;
-	   ++kindCPIt)
+	   kindCPIt != lastOne; ++kindCPIt)
       {
 	 std::cerr << "Resname: " << kindCPIt->first
 		   << "      Value: " << kindCPIt->second
@@ -70,6 +70,45 @@ void MoleculeKind::Init
       chemPot = kindCPIt->second;
    }
 #endif
+
+   //##################################
+   if(setup.config.sys.exchangeVal.enable)
+   {
+     rmax = setup.config.sys.exchangeVal.rmax;
+     std::map<std::string, uint>::const_iterator kindRatioIt =
+       setup.config.sys.exchangeVal.exRatio.find(name),
+       lastKind = setup.config.sys.exchangeVal.exRatio.end();
+   
+     //If we don't find a Resname for a kind in IDSwitch,
+     //then quit.
+     if(kindRatioIt == lastKind)
+     {
+       std::cerr << "================================================"
+		 << std::endl << std::endl
+		 << "Error: Residue name and ratio is missing for "
+		 << name <<"." << std::endl << std::endl
+		 << "Here are the listed Residue names:"
+		 << std::endl
+		 << "----------------------------------------"
+		 << std::endl;
+      
+       //Print out whatever resname were read.
+       for (kindRatioIt = setup.config.sys.exchangeVal.exRatio.begin();
+	    kindRatioIt != lastKind; ++kindRatioIt)
+       {
+	 std::cerr << "Resname: " << kindRatioIt->first
+		   << "      Exchange Ratio: " << kindRatioIt->second
+		   << std::endl;
+       }
+       exit(EXIT_FAILURE);
+     }
+     else
+     {
+       exchangeRatio = kindRatioIt->second;
+     }
+   }
+   //###################################
+
    
    InitAtoms(molData);
 

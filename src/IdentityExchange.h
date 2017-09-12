@@ -20,7 +20,53 @@ class IdentityExchange : public MoveBase
 
    IdentityExchange(System &sys, StaticVals const& statV) :
     ffRef(statV.forcefield), molLookRef(sys.molLookupRef),
-      MoveBase(sys, statV), rmax(statV.forcefield.rmax) {}
+      MoveBase(sys, statV), rmax(statV.mol.kinds[0].rmax) 
+      {
+	enableID = ffRef.enableID;
+	if(enableID)
+	{
+	  uint kindSnum = 0;
+	  uint kindLnum = 0;
+	  uint max = 0;
+	  for(uint k = 0; k < molLookRef.GetNumKind(); k++)
+	  {
+	    if(molRef.kinds[k].exchangeRatio != 0)
+	    {
+	      if(molRef.kinds[k].exchangeRatio > max)
+	      {
+		if(max == 0)
+		{
+		  max = molRef.kinds[k].exchangeRatio;
+		  kindS = k;
+		  kindSnum = molRef.kinds[k].exchangeRatio;
+		}
+		else
+		{
+		  kindL = kindS;
+		  kindLnum = kindSnum;
+		  kindS = k;
+		  kindSnum = molRef.kinds[k].exchangeRatio;
+		}
+	      }
+	      else
+	      {
+		kindL = k;
+		kindLnum = molRef.kinds[k].exchangeRatio;
+	      }
+	    }
+	  }
+
+	  if(kindLnum != 0 && kindSnum != 0)
+	  { 
+	    exchangeRate = kindSnum / kindLnum;
+	  }
+	  else
+	  {
+	    printf("Error: Identity Exchange move is valid for exchanging one large molecule with N small molecules. Exchange Ratio of one kind must set to 1.\n");
+	    exit(EXIT_FAILURE);
+	  }
+	}
+      }
 
    virtual uint Prep(const double subDraw, const double movPerc);
    virtual uint Transform();
@@ -44,7 +90,7 @@ class IdentityExchange : public MoveBase
    uint sourceBox, destBox;
    vector<uint> pStartA, pLenA, pStartB, pLenB;
    vector<uint> molIndexA, kindIndexA, molIndexB, kindIndexB;
-   bool insertB;
+   bool insertB, enableID;
    uint numInCavA, numInCavB, exchangeRate, kindS, kindL;
 
    double rmax;
@@ -52,7 +98,7 @@ class IdentityExchange : public MoveBase
    double W_tc, W_recip;
    double correct_oldA, correct_newA, self_oldA, self_newA;
    double correct_oldB, correct_newB, self_oldB, self_newB;
-   double recipLoseA, recipGainA, recipLoseB, recipGainB;
+   double recipDest, recipSource;
    vector<cbmc::TrialMol> oldMolA, newMolA, oldMolB, newMolB;
    Intermolecular tcNew[BOX_TOTAL];
    vector< vector<uint> > molInCav;
@@ -92,7 +138,7 @@ inline uint IdentityExchange::PickMolInCav()
        kindIndexA.push_back(molRef.GetMolKind(molIndexA[n]));
      } 
 
-     //pick a molecule from other kind in destBox
+     //pick a molecule from Large kind in destBox
      numInCavB = 1;
      state = prng.PickMol(kindS, kindIndexB, molIndexB, numInCavB,
 			  destBox);
@@ -118,7 +164,7 @@ inline uint IdentityExchange::ReplaceMolecule()
    kindIndexB.clear();
    numInCavA = 1;
    numInCavB = exchangeRate;
-   //pick a random molecule kind 1 in dens box
+   //pick a random molecule of Large kind in dens box
    state = prng.PickMol(kindS, kindIndexA, molIndexA, numInCavA, sourceBox);
 
    if(state == mv::fail_state::NO_FAIL)
@@ -128,7 +174,7 @@ inline uint IdentityExchange::ReplaceMolecule()
      //find how many of KindS exist in this center
      calcEnRef.FindMolInCavity(molInCav, center, rmax, sourceBox, kindS,
 			       exchangeRate);
-     //pick exchangeRate number of molecule from destBox
+     //pick exchangeRate number of Small molecule from dest box
      state = prng.PickMol(kindL, kindIndexB, molIndexB, numInCavB, destBox);  
    }
    return state;
@@ -137,11 +183,7 @@ inline uint IdentityExchange::ReplaceMolecule()
 inline uint IdentityExchange::GetBoxPairAndMol
 (const double subDraw, const double movPerc)
 {
-   uint state = mv::fail_state::NO_FAIL;
-   kindS = 0;
-   kindL = 1;
-   //replace 2 kindS with one kindL and vice versa
-   exchangeRate = 3; 
+   uint state = mv::fail_state::NO_FAIL; 
    //deside to insert or remove the big molecule
    prng.PickBool(insertB, subDraw, movPerc);
    
@@ -166,7 +208,7 @@ inline uint IdentityExchange::GetBoxPairAndMol
      }
    }
 
-   //Pick box at random
+   //Pick box in dense phase
    sourceBox = densB; 
    //Pick the destination box
    prng.SetOtherBox(destBox, sourceBox);
@@ -266,26 +308,38 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
  
      for(uint n = 0; n < numInCavB; n++)
      {
-       //Inserting molB from destBox to sourceBox
-       //shift moleB COM to a point in cavity of center and rotate around it
        if(kindIndexB[0] == kindL)
-       	 newMolB[n].SetSeed(center);
+       {
+	 //Inserting molB from destBox to the center of cavity in sourceBox
+	 newMolB[n].SetSeed(center, rmax, true, true);
+	 //perform rotational trial move in destBox for oldMolB
+	 oldMolB[n].SetSeed(false, true);
+       }
        else
-	 newMolB[n].SetSeed(center, rmax);
-       //use the COM of moleB to rotate around
-       oldMolB[n].SetSeed(comCurrRef.Get(molIndexB[n]));
+       {
+	 //Inserting molB from destBox to the cavity in sourceBox
+	 newMolB[n].SetSeed(center, rmax, true, false);
+	 //perform trial move in destBox for oldMolB
+	 oldMolB[n].SetSeed(false, false);
+       }
      }
 
      for(uint n = 0; n < numInCavA; n++)
      {
-       //Inserting molA from sourceBox to destBox
-       XYZ tempD(prng.randExc(axisD.x), prng.randExc(axisD.y),
-		 prng.randExc(axisD.z));
-       //randomly pick a locatoin in destBox
-       //shift moleA COM to tempD and and rotate around that
-       newMolA[n].SetSeed(tempD);
-       //use the COM of moleA to rotate around
-       oldMolA[n].SetSeed(comCurrRef.Get(molIndexA[n]));
+       if(kindIndexA[0] == kindL)
+       {
+	 //Inserting molA from sourceBox to destBox
+	 newMolA[n].SetSeed(false, true);
+	 //perform rotational trial move on COM for oldMolA
+	 oldMolA[n].SetSeed(center, rmax, true, true);
+       }
+       else
+       {
+	 //Inserting molA from sourceBox to destBox
+	 newMolA[n].SetSeed(false, false);
+	 //perform trial move in cavity in sourceBox for oldMolA
+	 oldMolA[n].SetSeed(center, rmax, true, false);
+       }
      }
    }
 
@@ -382,6 +436,7 @@ inline void IdentityExchange::CalcEn()
    self_oldA = 0.0, self_newA = 0.0;
    correct_oldB = 0.0, correct_newB = 0.0;
    self_oldB = 0.0, self_newB = 0.0;
+   recipDest = 0.0, recipSource = 0.0;
 
    for(uint n = 0; n < numInCavA; n++)
    {
@@ -389,11 +444,8 @@ inline void IdentityExchange::CalcEn()
       correct_oldA += calcEwald->SwapCorrection(oldMolA[n]);
       self_newA += calcEwald->SwapSelf(newMolA[n]);
       self_oldA += calcEwald->SwapSelf(oldMolA[n]);
-      recipGainA +=
-	calcEwald->SwapDestRecip(newMolA[n], destBox, sourceBox, molIndexA[n]);
-      recipLoseA +=
-	calcEwald->SwapSourceRecip(oldMolA[n], sourceBox, molIndexA[n]);
    }
+   recipDest = calcEwald->SwapRecip(newMolA, oldMolB);
 
    for(uint n = 0; n < numInCavB; n++)
    {
@@ -401,15 +453,11 @@ inline void IdentityExchange::CalcEn()
      correct_oldB += calcEwald->SwapCorrection(oldMolB[n]);
      self_newB += calcEwald->SwapSelf(newMolB[n]);
      self_oldB += calcEwald->SwapSelf(oldMolB[n]);
-     recipGainB +=
-	calcEwald->SwapDestRecip(newMolB[n], sourceBox, destBox, molIndexB[n]);
-     recipLoseB +=
-       calcEwald->SwapSourceRecip(oldMolB[n], destBox, molIndexB[n]);
    }
+   recipSource = calcEwald->SwapRecip(newMolB, oldMolA);
 
    //need to contribute the self and correction energy 
-   W_recip = exp(-1.0 * ffRef.beta * (recipGainA + recipLoseA +
-				      recipGainB + recipLoseB +
+   W_recip = exp(-1.0 * ffRef.beta * (recipSource + recipDest +
 				      correct_newA - correct_oldA +
 				      correct_newB - correct_oldB +
 				      self_newA - self_oldA +
@@ -438,8 +486,6 @@ inline double IdentityExchange::GetCoeff() const
     double ratioV = (volSource / volDest) * pow(volDest / volCav, exchangeRate);
     
     return ratioF * ratioV  * numTypeBDest / (numTypeBSource + 1.0);
-    //return numTypeBDest * volSource / (volCav * (numTypeBSource + 1.0) *
-    //				 (numTypeADest + 1.0));
   }
   else
   {
@@ -452,8 +498,6 @@ inline double IdentityExchange::GetCoeff() const
     double ratioV = (volDest / volSource) * pow(volCav / volDest, exchangeRate);
 
     return ratioF * ratioV  * numTypeASource / (numTypeADest + 1.0);
-    //return numTypeASource * numTypeBDest * volCav /
-    //	(volSource * (numTypeADest + 1.0));
   }
 #elif ENSEMBLE == GCMC
   if(ffRef.isFugacity)
@@ -618,10 +662,8 @@ inline void IdentityExchange::Accept(const uint rejectState, const uint step)
 	 
 
 	 //Add Reciprocal energy
-	 sysPotRef.boxEnergy[sourceBox].recip += recipLoseA;
-	 sysPotRef.boxEnergy[sourceBox].recip += recipGainB;
-	 sysPotRef.boxEnergy[destBox].recip += recipGainA;
-	 sysPotRef.boxEnergy[destBox].recip += recipLoseB;	 
+	 sysPotRef.boxEnergy[sourceBox].recip += recipSource;
+	 sysPotRef.boxEnergy[destBox].recip += recipDest;	 
 	 //Add correction energy
 	 sysPotRef.boxEnergy[sourceBox].correction -= correct_oldA;
 	 sysPotRef.boxEnergy[sourceBox].correction += correct_newB;

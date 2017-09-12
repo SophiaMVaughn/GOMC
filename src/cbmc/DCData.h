@@ -39,8 +39,9 @@ namespace cbmc
       const uint nAngleTrials; 
       const uint nDihTrials; 
       const uint nLJTrialsFirst; 
-      const uint nLJTrialsNth; 
- 
+      const uint nLJTrialsNth;
+      const uint totalTrials;
+
       //used for both angles and dihedrals 
       double* angles; 
       double* angleWeights; 
@@ -54,7 +55,12 @@ namespace cbmc
       double* oneFour; 
       double* nonbonded;      //calculated nonbonded 1_N LJ and coulomb energie 
       double* nonbonded_1_4;  //calculated nonbonded 1_4 LJ and coulomb energie 
-      double* nonbonded_1_3;  //calculated nonbonded 1_3 LJ and coulomb energie  
+      double* nonbonded_1_3;  //calculated nonbonded 1_3 LJ and coulomb energie
+
+      double* interT;
+      double* realT;
+      double* ljWeightsT;
+
       XYZArray multiPositions[MAX_BONDS]; 
    }; 
  
@@ -66,7 +72,7 @@ inline DCData::DCData(System& sys, const Forcefield& forcefield, const Setup& se
   nDihTrials(set.config.sys.cbmcTrials.bonded.dih), 
   nLJTrialsFirst(set.config.sys.cbmcTrials.nonbonded.first), 
   nLJTrialsNth(set.config.sys.cbmcTrials.nonbonded.nth),  
-  positions(*multiPositions) 
+  positions(*multiPositions), totalTrials(nLJTrialsFirst * nLJTrialsNth)
 {
    calcEwald = sys.GetEwald();
    uint maxLJTrials = nLJTrialsFirst; 
@@ -76,6 +82,11 @@ inline DCData::DCData(System& sys, const Forcefield& forcefield, const Setup& se
    { 
       multiPositions[i] = XYZArray(maxLJTrials); 
    } 
+
+   interT = new double[totalTrials]; 
+   realT = new double[totalTrials];  
+   ljWeightsT = new double[totalTrials];
+
    inter = new double[maxLJTrials]; 
    real = new double[maxLJTrials];  
    bonded = new double[maxLJTrials]; 
@@ -104,6 +115,9 @@ inline DCData::~DCData()
    delete[] angles; 
    delete[] angleWeights; 
    delete[] angleEnergy; 
+   delete[] interT; 
+   delete[] realT;
+   delete[] ljWeightsT;
 } 
  
 } 

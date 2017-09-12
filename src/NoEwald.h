@@ -75,12 +75,16 @@ class NoEwald : public EwaldCached
 
    //calculate reciprocate term in destination box for swap move
    virtual double SwapDestRecip(const cbmc::TrialMol &newMol, const uint box, 
-				const int sourceBox, const int molIndex);	
+			        const int molIndex);
 
    //calculate reciprocate term in source box for swap move
    virtual double SwapSourceRecip(const cbmc::TrialMol &oldMol,
 				  const uint box, const int molIndex);
 
+   //calculate reciprocate term for inserting some molecules kind A in
+   //destination box and removing molecule kind B from dest box
+   virtual double SwapRecip(const std::vector<cbmc::TrialMol> &newMol,
+			    const std::vector<cbmc::TrialMol> &oldMol);
 
    //back up reciptocate value to Ref (will be called during initialization)
    virtual void SetRecipRef(uint box);

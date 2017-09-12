@@ -98,8 +98,15 @@ public:
     for (uint i = 0; i < len; ++i)
       loc.Set(i, randExc(axis.x), randExc(axis.y), randExc(axis.z));
   }
-
+  
   //Used to pick first position of
+  void FillWithRandom(XYZ & loc, XYZ const& axis)
+  {
+    XYZ temp(randExc(axis.x), randExc(axis.y), randExc(axis.z));
+    loc = temp;
+  }
+
+  //Used to pick first position in cavity
   void FillWithRandomInCavity(XYZArray & loc, const uint len,
 			      const double rmax, XYZ const& center)
   {
@@ -110,7 +117,7 @@ public:
     }
   }
 
-  //Used to pick first position of
+  //Used to pick first position in cavity
   void FillWithRandomInCavity(XYZ &loc, const double rmax, XYZ const& center)
   {
     XYZ temp(center.x + SymExc(rmax), center.y + SymExc(rmax), center.z +
