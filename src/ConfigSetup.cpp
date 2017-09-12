@@ -335,6 +335,10 @@ void ConfigSetup::Init(const char *fileName)
       {
 	printf("%-40s %-s \n", "Info: Ewald Summation" , "Active");
       }
+      else
+      {
+	sys.elect.cache = false;
+      }
     }
     else if(line[0] == "ElectroStatic")
     {
@@ -393,7 +397,8 @@ void ConfigSetup::Init(const char *fileName)
     else if(line[0] == "PressureCalc")
     {
       sys.step.pressureCalc = checkBool(line[1]);
-      sys.step.pressureCalcFreq = stringtoi(line[2]);
+      if(line.size() == 3)
+	sys.step.pressureCalcFreq = stringtoi(line[2]);
 
       if(sys.step.pressureCalc && (line.size() == 2))
       {
@@ -403,8 +408,10 @@ void ConfigSetup::Init(const char *fileName)
       if(!sys.step.pressureCalc)
         printf("%-40s %-s \n", "Info: Pressure calculation", "Inactive");
       else
+      {
 	printf("%-40s %-d \n", "Info: Pressure calculation frequency",
 	       sys.step.pressureCalcFreq);
+      }
     }
     else if(line[0] == "DisFreq")
     {
@@ -546,7 +553,9 @@ void ConfigSetup::Init(const char *fileName)
     else if(line[0] == "CoordinatesFreq")
     {
       out.state.settings.enable = checkBool(line[1]);
-      out.state.settings.frequency = stringtoi(line[2]);
+      if(line.size() == 3)
+	out.state.settings.frequency = stringtoi(line[2]);
+
       if(out.state.settings.enable && (line.size() == 2))
 	out.state.settings.frequency = (ulong)sys.step.total / 10;
 
@@ -561,7 +570,9 @@ void ConfigSetup::Init(const char *fileName)
     else if(line[0] == "RestartFreq")
     {
       out.restart.settings.enable = checkBool(line[1]);
-      out.restart.settings.frequency = stringtoi(line[2]);
+      if(line.size() == 3)
+	out.restart.settings.frequency = stringtoi(line[2]);
+
       if(out.restart.settings.enable && (line.size() == 2))
 	out.restart.settings.frequency = (ulong)sys.step.total;
 
@@ -576,7 +587,9 @@ void ConfigSetup::Init(const char *fileName)
     else if(line[0] == "ConsoleFreq")
     {
       out.console.enable = checkBool(line[1]);
-      out.console.frequency = stringtoi(line[2]);
+      if(line.size() == 3)
+	out.console.frequency = stringtoi(line[2]);
+
       if(out.console.enable && (line.size() == 2))
       {
 	 if(sys.step.total > 1000)
@@ -599,10 +612,12 @@ void ConfigSetup::Init(const char *fileName)
     else if(line[0] == "BlockAverageFreq")
     {
       out.statistics.settings.block.enable = checkBool(line[1]);
-      out.statistics.settings.block.frequency = stringtoi(line[2]);
+      if(line.size() == 3)
+	out.statistics.settings.block.frequency = stringtoi(line[2]);
+
       if(out.statistics.settings.block.enable && (line.size() == 2))
 	out.statistics.settings.block.frequency = (ulong)sys.step.total / 100;
-	
+
       if(out.statistics.settings.block.enable)
       {
 	printf("%-40s %-d \n", "Info: Average output frequency",
@@ -615,7 +630,9 @@ void ConfigSetup::Init(const char *fileName)
     else if(line[0] == "HistogramFreq")
     {
       out.statistics.settings.hist.enable = checkBool(line[1]);
-      out.statistics.settings.hist.frequency = stringtoi(line[2]);
+      if(line.size() == 3)
+	out.statistics.settings.hist.frequency = stringtoi(line[2]);
+
       if(out.statistics.settings.hist.enable && (line.size() == 2))
       {
 	if(sys.step.total > 1000)

@@ -709,10 +709,13 @@ inline void IdentityExchange::Accept(const uint rejectState, const uint step)
 
 #if ENSEMBLE == GEMC
    subPick = mv::GetMoveSubIndex(mv::ID_EXCHANGE, sourceBox);
+   moveSetRef.Update(result, subPick, step);
+   subPick = mv::GetMoveSubIndex(mv::ID_EXCHANGE, destBox);
+   moveSetRef.Update(result, subPick, step);
 #elif ENSEMBLE == GCMC
    subPick = mv::GetMoveSubIndex(mv::ID_EXCHANGE);
-#endif
    moveSetRef.Update(result, subPick, step);
+#endif
 }
 
 #endif
