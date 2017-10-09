@@ -147,7 +147,8 @@ void ConfigSetup::Init(const char *fileName)
     if(line[0] == "Restart")
     {
       in.restart.enable = checkBool(line[1]);
-      printf("%-40s %-s \n", "Info: Restart simulation",  "Active");
+      if(in.restart.enable)
+	printf("%-40s %-s \n", "Info: Restart simulation",  "Active");
     }
     else if(line[0] == "FirstStep")
     {
@@ -272,7 +273,10 @@ void ConfigSetup::Init(const char *fileName)
     else if(line[0] == "LRC")
     {
       sys.ff.doTailCorr = checkBool(line[1]);
-      printf("%-40s %-s \n", "Info: Long Range Correction", "Active");
+      if(sys.ff.doTailCorr)
+	printf("%-40s %-s \n", "Info: Long Range Correction", "Active");
+      else
+	printf("%-40s %-s \n", "Info: Long Range Correction", "Inactive");
     }
     else if(line[0] == "Rswitch")
     {
@@ -338,6 +342,7 @@ void ConfigSetup::Init(const char *fileName)
       else
       {
 	sys.elect.cache = false;
+	printf("%-40s %-s \n", "Info: Ewald Summation" , "Inactive");
       }
     }
     else if(line[0] == "ElectroStatic")
