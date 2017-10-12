@@ -216,6 +216,7 @@ private:
   const COM& currentCOM;
   const EwaldCached  *calcEwald;
   bool electrostatic, ewald;
+  double rCut;
 
   std::vector<int> particleKind;
   std::vector<int> particleMol;

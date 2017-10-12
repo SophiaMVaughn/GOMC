@@ -51,6 +51,7 @@ void CalculateEnergy::Init(System & sys)
    calcEwald = sys.GetEwald();
    electrostatic = forcefield.electrostatic;
    ewald = forcefield.ewald;
+   rCut = forcefield.rCut;
    for(uint m = 0; m < mols.count; ++m)
    {
       const MoleculeKind& molKind = mols.GetKind(m);
@@ -327,27 +328,48 @@ bool CalculateEnergy::FindMolInCavity(std::vector< std::vector<uint> > &mol,
   uint k;
   mol.clear();
   mol.resize(molLookup.GetNumKind());
-  MoleculeLookup::box_iterator n = molLookup.BoxBegin(box);
-  MoleculeLookup::box_iterator end = molLookup.BoxEnd(box);
-  //CellList::Neighbors n = cellList.EnumerateLocal(center, box);
-
-  while (n != end)
+  if(rmax <= rCut)
   {
-    if(currentAxes.InCavity(currentCOM.Get(particleMol[*n]), center, rmax, box))
+    CellList::Neighbors n = cellList.EnumerateLocal(center, box);
+    while (!n.Done())
     {
-      uint molIndex = particleMol[*n];
-      //if molecule can be transfer between boxes
-      if(!molLookup.IsNoSwap(molIndex))
+      if(currentAxes.InCavity(currentCOM.Get(particleMol[*n]),center,rmax, box))
       {
-	k = mols.GetMolKind(molIndex);      
-	bool exist = std::find(mol[k].begin(), mol[k].end(), molIndex) !=
-	  mol[k].end();
-	if(!exist)
-	  mol[k].push_back(molIndex);
+	uint molIndex = particleMol[*n];
+	//if molecule can be transfer between boxes
+	if(!molLookup.IsNoSwap(molIndex))
+	{
+	  k = mols.GetMolKind(molIndex);      
+	  bool exist = std::find(mol[k].begin(), mol[k].end(), molIndex) !=
+	    mol[k].end();
+	  if(!exist)
+	    mol[k].push_back(molIndex);
+	}
       }
+      n.Next();   
     }
-    //n.Next();
-    ++n;
+  }
+  else
+  {
+    MoleculeLookup::box_iterator n = molLookup.BoxBegin(box);
+    MoleculeLookup::box_iterator end = molLookup.BoxEnd(box);  
+    while (n != end)
+    {
+      if(currentAxes.InCavity(currentCOM.Get(particleMol[*n]), center,rmax,box))
+      {
+	uint molIndex = particleMol[*n];
+	//if molecule can be transfer between boxes
+	if(!molLookup.IsNoSwap(molIndex))
+	{
+	  k = mols.GetMolKind(molIndex);      
+	  bool exist = std::find(mol[k].begin(), mol[k].end(), molIndex) !=
+	    mol[k].end();
+	  if(!exist)
+	    mol[k].push_back(molIndex);
+	}
+      }
+      ++n;
+    }
   }
 
   //If the is exRate and more molecule kind in cavity, return true.
@@ -374,7 +396,6 @@ void CalculateEnergy::MoleculeInter(Intermolecular &inter_LJ,
 	 uint atom = start + p;
 	 CellList::Neighbors n = cellList.EnumerateLocal(currentCoords[atom], 
 							 box);
-	 n = cellList.EnumerateLocal(currentCoords[atom], box);
 	 
 	 double qi_qj_fact, distSq; 
 	 uint i;
