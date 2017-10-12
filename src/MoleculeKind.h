@@ -59,9 +59,11 @@ class MoleculeKind
    { builder->Build(oldMol, newMol, molIndex); }
 
    //Invoke CBMC, oldMol and newMol will be modified
-   void BuildID(cbmc::TrialMol& oldMol, cbmc::TrialMol& newMol,
-		const uint molIndex)
-   { builder->BuildID(oldMol, newMol, molIndex); }
+   void BuildIDNew(cbmc::TrialMol& newMol, const uint molIndex)
+   { builder->BuildIDNew(newMol, molIndex); }
+
+   void BuildIDOld(cbmc::TrialMol& oldMol, const uint molIndex)
+   { builder->BuildIDOld(oldMol, molIndex); }
 
    
    double PrintChargeInfo();

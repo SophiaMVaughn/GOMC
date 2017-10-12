@@ -64,11 +64,14 @@ void DCLinear::Build(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
   }
 }
 
-void DCLinear::BuildID(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
+void DCLinear::BuildIDNew(TrialMol& newMol, uint molIndex)
 {
   idExchange->PrepareNew(newMol, molIndex);
   idExchange->BuildNew(newMol, molIndex);
+}
 
+void DCLinear::BuildIDOld(TrialMol& oldMol, uint molIndex)
+{
   idExchange->PrepareOld(oldMol, molIndex);
   idExchange->BuildOld(oldMol, molIndex);
 }

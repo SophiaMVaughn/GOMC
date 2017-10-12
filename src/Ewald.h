@@ -68,6 +68,12 @@ class Ewald : public EwaldCached
    virtual double SwapRecip(const std::vector<cbmc::TrialMol> &newMol,
 			    const std::vector<cbmc::TrialMol> &oldMol);
 
+   //calculate reciprocate term for changing coordinate of multiple molecule
+   virtual double IntraSwapRecip(const std::vector<cbmc::TrialMol> &newMolA,
+				 const std::vector<cbmc::TrialMol> &oldMolA,
+				 const std::vector<cbmc::TrialMol> &newMolB,
+				 const std::vector<cbmc::TrialMol> &oldMolB);
+
    //restore cosMol and sinMol
    virtual void RestoreMol(int molIndex);
 

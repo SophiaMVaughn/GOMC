@@ -75,6 +75,7 @@ ConfigSetup::ConfigSetup(void)
   sys.moves.displace = DBL_MAX;
   sys.moves.rotate = DBL_MAX;
   sys.moves.intraSwap = DBL_MAX;
+  sys.moves.intraIdExchange = DBL_MAX;
   out.state.settings.enable = true;
   out.restart.settings.enable = true;
   out.console.enable = true;
@@ -430,6 +431,16 @@ void ConfigSetup::Init(const char *fileName)
       printf("%-40s %-4.4f \n", "Info: Intra-Swap move frequency",
 	     sys.moves.intraSwap);
     }
+    else if(line[0] == "IntraIDSwitchFreq")
+    {
+      sys.moves.intraIdExchange = stringtod(line[1]);
+      printf("%-40s %-4.4f \n", "Info: Intra Identity swap move frequency",
+	     sys.moves.intraIdExchange);
+      if(sys.moves.intraIdExchange > 0.0)
+      {
+	sys.exchangeVal.enable = true;
+      }
+    }
     else if(line[0] == "RotFreq")
     {
       sys.moves.rotate = stringtod(line[1]);
@@ -775,6 +786,13 @@ void ConfigSetup::fillDefaults(void)
     }
   }
 
+  if(sys.moves.intraIdExchange == DBL_MAX)
+  {
+    sys.moves.intraIdExchange = 0.0;
+    printf("%-40s %-4.4f \n", "Default: Intra Identity swap move frequency",
+	     sys.moves.intraIdExchange);
+  }
+
 #ifdef VARIABLE_PARTICLE_NUMBER
   if(sys.moves.idExchange == DBL_MAX)
   {
@@ -1010,11 +1028,7 @@ void ConfigSetup::verifyInputs(void)
     std::cout << "Error: Rotation move frequency is not specified!\n";
     exit(0);
   }
-  if(sys.moves.intraSwap == DBL_MAX)
-  {
-    std::cout << "Error: Intra-Swap move frequency is not specified!\n";
-    exit(0);
-  }
+  
 #if ENSEMBLE == NPT
   if(sys.moves.volume == DBL_MAX)
   {
@@ -1034,8 +1048,8 @@ void ConfigSetup::verifyInputs(void)
     exit(0);
   }
   if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.transfer +
-	 sys.moves.intraSwap + sys.moves.volume + sys.moves.idExchange -
-	 1.0) > 0.01)
+	 sys.moves.intraSwap + sys.moves.volume + sys.moves.idExchange +
+	 sys.moves.intraIdExchange - 1.0) > 0.01)
   {
     std::cout << "Error: Sum of move frequncies are not equal to one!\n";
     exit(0);
@@ -1047,7 +1061,7 @@ void ConfigSetup::verifyInputs(void)
     exit(0);
   }
   if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.intraSwap +
-	 sys.moves.volume - 1.0) > 0.01)
+	 sys.moves.volume + sys.moves.intraIdExchange - 1.0) > 0.01)
   {
     std::cout << "Error: Sum of move frequncies are not equal to one!\n";
     exit(0);
@@ -1060,13 +1074,15 @@ void ConfigSetup::verifyInputs(void)
     exit(0);
   }
   if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.intraSwap +
-	 sys.moves.transfer + sys.moves.idExchange - 1.0) > 0.01)
+	 sys.moves.transfer + sys.moves.idExchange + sys.moves.intraIdExchange
+	 - 1.0) > 0.01)
   {
     std::cout << "Error: Sum of move frequncies are not equal to one!!\n";
     exit(0);
   }
 #else
-  if(abs(sys.moves.displace +sys.moves.rotate +sys.moves.intraSwap -1.0) > 0.01)
+  if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.intraSwap+
+	 sys.moves.intraIdExchange -1.0) > 0.01)
   {
     std::cout << "Error: Sum of move frequncies are not equal to one!!\n";
     exit(0);

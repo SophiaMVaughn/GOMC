@@ -85,6 +85,7 @@ set(headers
    IdentityExchange.h
    InputAbstracts.h
    InputFileReader.h
+   IntraIdentityExchange.h
    IntraSwap.h
    MersenneTwister.h
    MoleculeKind.h

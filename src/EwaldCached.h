@@ -99,6 +99,12 @@ class EwaldCached
    virtual double SwapRecip(const std::vector<cbmc::TrialMol> &newMol,
 			    const std::vector<cbmc::TrialMol> &oldMol);
 
+   //calculate reciprocate term for changing coordinate of multiple molecule
+   virtual double IntraSwapRecip(const std::vector<cbmc::TrialMol> &newMolA,
+				 const std::vector<cbmc::TrialMol> &oldMolA,
+				 const std::vector<cbmc::TrialMol> &newMolB,
+				 const std::vector<cbmc::TrialMol> &oldMolB);
+
    //back up reciptocate value to Ref (will be called during initialization)
    virtual void SetRecipRef(uint box);
 

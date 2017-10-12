@@ -757,6 +757,18 @@ double EwaldCached::SwapRecip(const std::vector<cbmc::TrialMol> &newMol,
   return 0.0;
 }
 
+//calculate reciprocate term in source box for swap move
+double EwaldCached::IntraSwapRecip(const std::vector<cbmc::TrialMol> &newMolA,
+				   const std::vector<cbmc::TrialMol> &oldMolA,
+				   const std::vector<cbmc::TrialMol> &newMolB,
+				   const std::vector<cbmc::TrialMol> &oldMolB)
+{
+  //This function should not be called in IDExchange move
+  std::cout << "Error: Cached Fourier method cannot be used while " << 
+    "performing Identity Exchange move!" << std::endl;
+  exit(0);
+  return 0.0;
+}
 
 //calculate reciprocate term in source box for swap move
 double EwaldCached::SwapSourceRecip(const cbmc::TrialMol &oldMol,

@@ -42,6 +42,8 @@ void StaticVals::InitMovePercents(config_setup::MovePercents const& perc)
 	 movePerc[m] = perc.rotate; break;
       case mv::INTRA_SWAP:
 	 movePerc[m] = perc.intraSwap; break;
+      case mv::INTRA_ID_EXCHANGE :
+	movePerc[m] = perc.intraIdExchange; break;
 #ifdef VARIABLE_VOLUME
       case mv::VOL_TRANSFER :
 	 movePerc[m] = perc.volume; break;

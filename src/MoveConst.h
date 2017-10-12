@@ -24,22 +24,26 @@ const uint DISPLACE = 0;
 const uint ROTATE = 1;
 #if ENSEMBLE == NVT
 const uint INTRA_SWAP = 2;
-const uint MOVE_KINDS_TOTAL = 3;
+const uint INTRA_ID_EXCHANGE = 3;
+const uint MOVE_KINDS_TOTAL = 4;
 #elif ENSEMBLE == GCMC
 const uint INTRA_SWAP = 2;
-const uint ID_EXCHANGE = 3;
-const uint MOL_TRANSFER = 4;
-const uint MOVE_KINDS_TOTAL = 5;
+const uint INTRA_ID_EXCHANGE = 3;
+const uint ID_EXCHANGE = 4;
+const uint MOL_TRANSFER = 5;
+const uint MOVE_KINDS_TOTAL = 6;
 #elif ENSEMBLE == GEMC
-const uint VOL_TRANSFER=2;
-const uint MOL_TRANSFER=3;
+const uint VOL_TRANSFER = 2;
+const uint MOL_TRANSFER = 3;
 const uint INTRA_SWAP = 4;
-const uint ID_EXCHANGE = 5;
-const uint MOVE_KINDS_TOTAL=6;
+const uint INTRA_ID_EXCHANGE = 5;
+const uint ID_EXCHANGE = 6;
+const uint MOVE_KINDS_TOTAL = 7;
 #elif ENSEMBLE == NPT
-const uint VOL_TRANSFER=2;
+const uint VOL_TRANSFER = 2;
 const uint INTRA_SWAP = 3;
-const uint MOVE_KINDS_TOTAL=4;
+const uint INTRA_ID_EXCHANGE = 4;
+const uint MOVE_KINDS_TOTAL =5;
 #endif
 
 const uint BOX0 = 0;
@@ -95,25 +99,32 @@ const uint IT_KINDS_TOTAL=2;
 //////////////////////////////////////////////////////////
 
 //NVT : 1. Disp (box 0) 2. Rotate (box 0) 3. IntraSwap (box 0)
-//GCMC: 1. Disp (box 0) 2. Rotate (box 0) 3. Deletion (box 0)
-//      4. Insertion (box 0) 5. IntraSwap (box 0) 6. ID Exchange
-//GEMC: 1. Disp (box 0) 2. Disp (box 1) 3. Rotate (box 0) 4. Rotate (box 1)
-//      5. Vol. (b0->b1) 6. Vol. (b1->b0) 7. Mol Trans (b0->b1), lin.
-//      8. Mol Trans (b1->b0), lin. 9. IntraSwap (box 0)
-//     10. IntraSwap (box 1)       11. ID Exchange  12. ID Exchange
-//NPT : 1. Disp (box 0) 2. Rotate (box 0) 3. IntraSwap (box 0) 4. Vol. (box 0)
+//      4. Intra_ID_Switch(box 0) 
+
+//GCMC: 1. Disp (box 0) 2. Rotate (box 0) 3. IntraSwap (box 0)
+//      4. Intra_ID_Switch(box 0) 5. ID_Exchange(box 0)
+//      6. Deletion (box 0) 7. Insertion (box 0)
+
+//GEMC: 1. Disp (box 0)  2. Disp (box 1)  3. Rotate (box 0) 4. Rotate (box 1)
+//      5. Vol. (b0->b1) 6. Vol. (b1->b0) 7. MolTrans (b0->b1)
+//      8. MolTrans (b1->b0)  9. IntraSwap (box 0) 10. IntraSwap (box 1)
+//     11. Intra_ID_Exchange(box 0)  12. Intra_ID_Exchange(box 1) 
+//     13. ID_Exchange(box 0)  14. ID_Exchange(box 1)
+
+//NPT : 1. Disp (box 0) 2. Rotate (box 0)  3. Vol. (box 0) 4. IntraSwap (box 0)
+//      5. ID_Exchange(box 0)
 
 #if ENSEMBLE == NVT
-const uint COUNT = 3;
+const uint COUNT = 4;
 const uint SCALEABLE = 2;
 #elif ENSEMBLE == GCMC
-const uint COUNT = 6;
+const uint COUNT = 7;
 const uint SCALEABLE = 2;
 #elif ENSEMBLE == GEMC
-const uint COUNT = 12;
+const uint COUNT = 14;
 const uint SCALEABLE = 6;
 #elif ENSEMBLE == NPT
-const uint COUNT = 4;
+const uint COUNT = 5;
 const uint SCALEABLE = 3;
 #endif
 
@@ -123,7 +134,7 @@ const uint SCALEABLE = 3;
 //early exit flags.
 namespace auto_accept
 {
-const uint ONLY_IN_BOX_ROT_OR_DISP=0;
+const uint ONLY_IN_BOX_ROT_OR_DISP = 0;
 }
 
 namespace fail_state
@@ -131,8 +142,8 @@ namespace fail_state
 const uint NO_FAIL = 1;
 const uint ROTATE_ON_SINGLE_ATOM = 2;
 const uint NO_MOL_OF_KIND_IN_BOX = 3;
-const uint INNER_CUTOFF_NEW_TRIAL_POS=4;
-const uint VOL_TRANS_WOULD_SHRINK_BOX_BELOW_CUTOFF=5;
+const uint INNER_CUTOFF_NEW_TRIAL_POS = 4;
+const uint VOL_TRANS_WOULD_SHRINK_BOX_BELOW_CUTOFF = 5;
 const uint NO_TWO_MOLECULE_KIND = 6;
 }
 
@@ -155,12 +166,13 @@ const uint NO_TWO_MOLECULE_KIND = 6;
 
 inline uint GetMoveSubIndex(const uint maj, const uint b = 0)
 {
-#if ENSEMBLE == GEMC || ENSEMBLE == NVT || ENSEMBLE == NPT
-  return maj*BOX_TOTAL + b;
-#else
+#if ENSEMBLE == GCMC
   return maj+b; //in GCMC we have deletion and insertion,
-  //we care about two box. [4+0 or 4+1]
+  //we care about two box. [5+0 or 5+1]
+#else
+  return maj*BOX_TOTAL + b;
 #endif
+
 }
 
 //Names of above moves as strings for output.

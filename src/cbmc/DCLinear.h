@@ -25,7 +25,8 @@ namespace cbmc {
          const MoleculeKind& kind, const Setup& set);
 
       void Build(TrialMol& oldMol, TrialMol& newMol, uint molIndex);
-      void BuildID(TrialMol& oldMol, TrialMol& newMol, uint molIndex);
+      void BuildIDNew(TrialMol& newMol, uint molIndex);
+      void BuildIDOld(TrialMol& oldMol, uint molIndex);
       ~DCLinear();
 
    private:

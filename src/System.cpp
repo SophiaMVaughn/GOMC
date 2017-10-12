@@ -15,6 +15,7 @@
 #include "MoleculeTransfer.h"
 #include "IntraSwap.h"
 #include "IdentityExchange.h"
+#include "IntraIdentityExchange.h"
 
 System::System(StaticVals& statics) : 
    statV(statics),
@@ -39,6 +40,7 @@ System::~System()
    delete moves[mv::DISPLACE];
    delete moves[mv::ROTATE];
    delete moves[mv::INTRA_SWAP];
+   delete moves[mv::INTRA_ID_EXCHANGE];
 #if ENSEMBLE == GEMC || ENSEMBLE == NPT
    delete moves[mv::VOL_TRANSFER];
 #endif
@@ -91,6 +93,7 @@ void System::InitMoves()
    moves[mv::DISPLACE] = new Translate(*this, statV);
    moves[mv::ROTATE] = new Rotate(*this, statV);
    moves[mv::INTRA_SWAP] = new IntraSwap(*this, statV);
+   moves[mv::INTRA_ID_EXCHANGE] = new IntraIdentityExchange(*this, statV);
 #if ENSEMBLE == GEMC || ENSEMBLE == NPT
    moves[mv::VOL_TRANSFER] = new VolumeTransfer(*this, statV);
 #endif

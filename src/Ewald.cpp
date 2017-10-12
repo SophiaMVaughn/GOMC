@@ -415,6 +415,91 @@ double Ewald::SwapRecip(const std::vector<cbmc::TrialMol> &newMol,
 }
 
 
+//calculate reciprocate term for changing coordinate of multiple molecule
+double Ewald::IntraSwapRecip(const std::vector<cbmc::TrialMol> &newMolA,
+			     const std::vector<cbmc::TrialMol> &oldMolA,
+			     const std::vector<cbmc::TrialMol> &newMolB,
+			     const std::vector<cbmc::TrialMol> &oldMolB) 
+{
+   double energyRecipNew = 0.0; 
+   double energyRecipOld = 0.0;  
+   //same box for kind A and B
+   uint box = newMolA[0].GetBox(); 
+
+   if(box < BOXES_WITH_U_NB)
+   {
+      uint p, i, m, lengthA, lengthB;
+      double dotProduct, sumReal, sumImaginary;
+      //newMol and oldMole has the same size and kind
+      MoleculeKind const& thisKindA = newMolA[0].GetKind();
+      MoleculeKind const& thisKindB = newMolB[0].GetKind();
+      lengthA = thisKindA.NumAtoms();
+      lengthB = thisKindB.NumAtoms();
+
+#ifdef _OPENMP
+#pragma omp parallel for default(shared) private(i, p, dotProduct, sumReal, sumImaginary) reduction(+:energyRecipNew) 
+#endif
+      for (i = 0; i < imageSizeRef[box]; i++)
+      {
+	 sumReal = 0.0;
+	 sumImaginary = 0.0;  
+	
+	 for (m = 0; m < newMolA.size(); m++)
+	 {
+	   for (p = 0; p < lengthA; ++p)
+	   {
+	     dotProduct = currentAxes.DotProduct(p, kxRef[box][i],
+						 kyRef[box][i],kzRef[box][i],
+						 newMolA[m].GetCoords(), box);
+
+	     sumReal += (thisKindA.AtomCharge(p) * cos(dotProduct));
+	     sumImaginary += (thisKindA.AtomCharge(p) * sin(dotProduct));
+	     //subtract old coordinates
+	     dotProduct = currentAxes.DotProduct(p, kxRef[box][i],
+						 kyRef[box][i],kzRef[box][i],
+						 oldMolA[m].GetCoords(), box);
+
+	     sumReal -= (thisKindA.AtomCharge(p) * cos(dotProduct));
+	     sumImaginary -= (thisKindA.AtomCharge(p) * sin(dotProduct));
+	   }
+	 }
+
+	 for (m = 0; m < newMolB.size(); m++)
+	 {
+	   for (p = 0; p < lengthB; ++p)
+	   {
+	     dotProduct = currentAxes.DotProduct(p, kxRef[box][i],
+						 kyRef[box][i],kzRef[box][i],
+						 newMolB[m].GetCoords(), box);
+
+	     sumReal += (thisKindB.AtomCharge(p) * cos(dotProduct));
+	     sumImaginary += (thisKindB.AtomCharge(p) * sin(dotProduct));
+	     //subtract old coordinates
+	     dotProduct = currentAxes.DotProduct(p, kxRef[box][i],
+						 kyRef[box][i],kzRef[box][i],
+						 oldMolB[m].GetCoords(), box);
+
+	     sumReal -= (thisKindB.AtomCharge(p) * cos(dotProduct));
+	     sumImaginary -= (thisKindB.AtomCharge(p) * sin(dotProduct));
+	   }
+	 }
+
+	 //sumRealNew;
+	 sumRnew[box][i] = sumRref[box][i] + sumReal;
+	 //sumImaginaryNew;
+	 sumInew[box][i] = sumIref[box][i] + sumImaginary;
+   
+	 energyRecipNew += (sumRnew[box][i] * sumRnew[box][i] + sumInew[box][i]
+			    * sumInew[box][i]) * prefactRef[box][i];
+      }
+
+      energyRecipOld = sysPotRef.boxEnergy[box].recip;
+   }
+
+   return energyRecipNew - energyRecipOld;
+}
+
+
 //calculate reciprocate term for removing one molecule in source box
 double Ewald::SwapSourceRecip(const cbmc::TrialMol &oldMol,
 			      const uint box, const int molIndex) 

@@ -324,11 +324,14 @@ bool CalculateEnergy::FindMolInCavity(std::vector< std::vector<uint> > &mol,
 				      const uint box, const uint kind,
 				      const uint exRate)
 {
+  uint k;
   mol.clear();
   mol.resize(molLookup.GetNumKind());
+  MoleculeLookup::box_iterator n = molLookup.BoxBegin(box);
+  MoleculeLookup::box_iterator end = molLookup.BoxEnd(box);
+  //CellList::Neighbors n = cellList.EnumerateLocal(center, box);
 
-  CellList::Neighbors n = cellList.EnumerateLocal(center, box);
-  while (!n.Done())
+  while (n != end)
   {
     if(currentAxes.InCavity(currentCOM.Get(particleMol[*n]), center, rmax, box))
     {
@@ -336,15 +339,15 @@ bool CalculateEnergy::FindMolInCavity(std::vector< std::vector<uint> > &mol,
       //if molecule can be transfer between boxes
       if(!molLookup.IsNoSwap(molIndex))
       {
-	uint kind = mols.GetMolKind(molIndex);      
-	bool exist = std::find(mol[kind].begin(), mol[kind].end(), molIndex) !=
-	  mol[kind].end();
+	k = mols.GetMolKind(molIndex);      
+	bool exist = std::find(mol[k].begin(), mol[k].end(), molIndex) !=
+	  mol[k].end();
 	if(!exist)
-	  mol[kind].push_back(molIndex);
+	  mol[k].push_back(molIndex);
       }
     }
-
-    n.Next();
+    //n.Next();
+    ++n;
   }
 
   //If the is exRate and more molecule kind in cavity, return true.

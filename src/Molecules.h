@@ -23,12 +23,12 @@ public:
   Molecules();
   ~Molecules();
 
-  const MoleculeKind& GetKind(const uint molIndex) const
+  MoleculeKind& GetKind(const uint molIndex) const
   {
     return kinds[kIndex[molIndex]];
   }
 
-  const uint GetMolKind(const uint molIndex) const
+  uint GetMolKind(const uint molIndex) const
   {
     return kIndex[molIndex];
   }

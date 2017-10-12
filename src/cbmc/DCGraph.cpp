@@ -105,11 +105,14 @@ void DCGraph::Build(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
   }
 }
 
-void DCGraph::BuildID(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
+void DCGraph::BuildIDNew(TrialMol& newMol, uint molIndex)
 {
   idExchange->PrepareNew(newMol, molIndex);
   idExchange->BuildNew(newMol, molIndex);
+}
 
+void DCGraph::BuildIDOld(TrialMol& oldMol, uint molIndex)
+{
   idExchange->PrepareOld(oldMol, molIndex);
   idExchange->BuildOld(oldMol, molIndex);
 }

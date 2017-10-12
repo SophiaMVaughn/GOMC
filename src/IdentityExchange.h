@@ -352,52 +352,37 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
 inline uint IdentityExchange::Transform()
 {
   CalcTc();
-  //Deleting MoleculeB from sourceBox
+
+  //Calc Old energy and delete A from source
+  for(uint n = 0; n < numInCavA; n++)
+  {
+    cellList.RemoveMol(molIndexA[n], sourceBox, coordCurrRef);
+    molRef.kinds[kindIndexA[n]].BuildIDOld(oldMolA[n], molIndexA[n]);
+  }
+  
+  //Calc old energy and delete B from destBox
   for(uint n = 0; n < numInCavB; n++)
   {
     cellList.RemoveMol(molIndexB[n], destBox, coordCurrRef);
+    molRef.kinds[kindIndexB[n]].BuildIDOld(oldMolB[n], molIndexB[n]);
   }
   
   //Insert A to destBox
   for(uint n = 0; n < numInCavA; n++)
   {
-    cellList.RemoveMol(molIndexA[n], sourceBox, coordCurrRef);
-    //Transfer Type A to destBox
-    molRef.kinds[kindIndexA[n]].BuildID(oldMolA[n], newMolA[n], molIndexA[n]);
+    molRef.kinds[kindIndexA[n]].BuildIDNew(newMolA[n], molIndexA[n]);
     ShiftMol(n, sourceBox, destBox);
     cellList.AddMol(molIndexA[n], destBox, coordCurrRef);
-  }
-
-  //Deleting MoleculeA before inserting B
-  for(uint n = 0; n < numInCavA; n++)
-  {
-    cellList.RemoveMol(molIndexA[n], destBox, coordCurrRef);
-  }
-  
-  //Add moleculeB back to sourceBox
-  for(uint n = 0; n < numInCavB; n++)
-  {
-    cellList.AddMol(molIndexB[n], destBox, coordCurrRef);
   }
 
   //Insert B in sourceBox
   for(uint n = 0; n < numInCavB; n++)
   {
-    cellList.RemoveMol(molIndexB[n], destBox, coordCurrRef);
-    //Transfer Type B to sourceBox
-    molRef.kinds[kindIndexB[n]].BuildID(oldMolB[n], newMolB[n], molIndexB[n]);
+    molRef.kinds[kindIndexB[n]].BuildIDNew(newMolB[n], molIndexB[n]);
     ShiftMol(n, destBox, sourceBox);
     cellList.AddMol(molIndexB[n], sourceBox, coordCurrRef);    
   }
   
-  //Add moleculeA back to sourcebox
-  for(uint n = 0; n < numInCavA; n++)
-  {
-    cellList.AddMol(molIndexA[n], destBox, coordCurrRef);
-  }
-  
-  
-
   return mv::fail_state::NO_FAIL;
 }
 

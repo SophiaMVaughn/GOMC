@@ -118,6 +118,14 @@ double NoEwald::SwapRecip(const std::vector<cbmc::TrialMol> &newMol,
   return 0.0;
 }
 
+//calculate reciprocate term for changing coordinate of multiple molecule
+double NoEwald::IntraSwapRecip(const std::vector<cbmc::TrialMol> &newMolA,
+			       const std::vector<cbmc::TrialMol> &oldMolA,
+			       const std::vector<cbmc::TrialMol> &newMolB,
+			       const std::vector<cbmc::TrialMol> &oldMolB)
+{
+  return 0.0;
+}
 
 //calculate reciprocate term in source box for swap move
 double NoEwald::SwapSourceRecip(const cbmc::TrialMol &oldMol,

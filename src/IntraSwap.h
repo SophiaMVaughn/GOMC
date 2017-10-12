@@ -153,6 +153,7 @@ inline void IntraSwap::Accept(const uint rejectState, const uint step)
    }
    else  //else we didn't even try because we knew it would fail
       result = false;
+
    subPick = mv::GetMoveSubIndex(mv::INTRA_SWAP, sourceBox);
    moveSetRef.Update(result, subPick, step);
 }

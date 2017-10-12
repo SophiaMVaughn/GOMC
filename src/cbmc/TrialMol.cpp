@@ -43,6 +43,8 @@ TrialMol::TrialMol(const TrialMol& other) :
 {
   atomBuilt = new bool[kind->NumAtoms()];
   std::copy(other.atomBuilt, other.atomBuilt + kind->NumAtoms(), atomBuilt);
+  seedInCav = false;
+  seedFix = false;
 }
 
 TrialMol& TrialMol::operator=(TrialMol other)
