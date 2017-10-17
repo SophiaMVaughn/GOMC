@@ -120,18 +120,19 @@ void ConsoleOutput::PrintMove(const uint box, const ulong step) const
     printElement(var->GetAccepted(sub), elementWidth);
     printElement(var->GetAcceptPercent(sub), elementWidth);
 
-    //printElement(var->GetScale(sub), elementWidth);
+#if ENSEMBLE == GEMC || ENSEMBLE == GCMC
+    sub = mv::GetMoveSubIndex(mv::ID_EXCHANGE, box);
+    printElement(var->GetTries(sub), elementWidth);
+    printElement(var->GetAccepted(sub), elementWidth);
+    printElement(var->GetAcceptPercent(sub), elementWidth);
+#endif
+
 #if ENSEMBLE == GCMC
   }
 #endif
 
 #if ENSEMBLE == GEMC || ENSEMBLE == GCMC
   sub = mv::GetMoveSubIndex(mv::MOL_TRANSFER, box);
-  printElement(var->GetTries(sub), elementWidth);
-  printElement(var->GetAccepted(sub), elementWidth);
-  printElement(var->GetAcceptPercent(sub), elementWidth);
-
-  sub = mv::GetMoveSubIndex(mv::ID_EXCHANGE, box);
   printElement(var->GetTries(sub), elementWidth);
   printElement(var->GetAccepted(sub), elementWidth);
   printElement(var->GetAcceptPercent(sub), elementWidth);
@@ -309,13 +310,13 @@ void ConsoleOutput::PrintMoveTitle()
   printElement("INIDEXACCEPT%", elementWidth);
 
 #if ENSEMBLE == GEMC || ENSEMBLE == GCMC
-  printElement("TRANSFER", elementWidth);
-  printElement("TRANACCEPT", elementWidth);
-  printElement("TRANACCEPT%", elementWidth);
-
   printElement("IDEXCHANGE", elementWidth);
   printElement("IDEXACCEPT", elementWidth);
   printElement("IDEXACCEPT%", elementWidth);
+
+  printElement("TRANSFER", elementWidth);
+  printElement("TRANACCEPT", elementWidth);
+  printElement("TRANACCEPT%", elementWidth);
 #endif
 
 #if ENSEMBLE == GEMC || ENSEMBLE == NPT
