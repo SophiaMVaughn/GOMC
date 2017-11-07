@@ -47,7 +47,7 @@ ConfigSetup::ConfigSetup(void)
   sys.step.equil = ULONG_MAX;
   sys.step.adjustment = ULONG_MAX;
   sys.step.pressureCalcFreq = ULONG_MAX;
-  sys.exchangeVal.rmax = DBL_MAX;
+  sys.exchangeVal.read = false;
   in.ffKind.numOfKinds = 0;
   sys.exclude.EXCLUDE_KIND = UINT_MAX;
   in.prng.kind = "";
@@ -285,11 +285,16 @@ void ConfigSetup::Init(const char *fileName)
     }
     else if(line[0] == "CavityLength")
     {
-      if(line.size() == 2)
+      if(line.size() == 4)
       {
-	sys.exchangeVal.rmax = stringtod(line[1]);
-	printf("%-40s %-4.4f A\n", "Info: Exchange Cavity Length",
-	       sys.exchangeVal.rmax);
+	XYZ temp;
+	temp.x = stringtod(line[1]);
+	temp.y = stringtod(line[2]);
+	temp.z = stringtod(line[3]);
+	sys.exchangeVal.rmax = temp;
+	printf("%-40s %-4.3f %-4.3f %-4.3f A\n",
+	       "Info: Exchange Cavity Dimensions", temp.x, temp.y, temp.z);
+	sys.exchangeVal.read = true;
       }
     }
     else if(line[0] == "Exchange")
@@ -870,9 +875,9 @@ void ConfigSetup::verifyInputs(void)
 	   "Warning: Electrostatic calculation with Ewlad method", "Inactive");
   }
 
-  if(sys.exchangeVal.enable &&  (sys.exchangeVal.rmax == DBL_MAX))
+  if(sys.exchangeVal.enable && !sys.exchangeVal.read)
   {
-    std::cout << "Error: Cavity length for Identity exchange move is not specified!" << std::endl;
+    printf("Error: Cavity length for Identity exchange move is not specified!\n");
     exit(0);
   }
   

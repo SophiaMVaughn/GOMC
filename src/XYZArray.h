@@ -152,6 +152,20 @@ public:
     return z[i] - z[j];
   }
 
+  double Length(const uint i) const
+  {
+    return sqrt(x[i] * x[i] + y[i] * y[i] + z[i] * z[i]);
+  }
+
+  //calculate the inverse of matrix
+  void InvMatrix(XYZArray &Inv);
+
+  //return the Transpose of matrix
+  void TransposeMatrix(XYZArray &Inv);
+
+  //Calculate transform of A using dot product
+  XYZ Transform(const XYZ &A) const;
+
   //return the difference of two rows in two XYZ arrays
   XYZ Difference(const uint i, XYZArray const& other,
                  const uint otherI) const
@@ -304,6 +318,9 @@ public:
   //Multiply a constant transform x*val, y*val, ... to all values.
   void ScaleAll(const double val);
 
+  //Find two vectors that are perpendicular to V1 using Gram-Schmidt method
+  void GramSchmidt();
+
   ////////////////////////////////////////////////////////////////////
 
   //Copy range of points.
@@ -314,7 +331,6 @@ public:
   {
     return Max(box);
   };
-
 
 protected:
   double * x, * y, * z;
@@ -518,5 +534,79 @@ inline void XYZArray::CopyRange(XYZArray & dest, const uint srcIndex,
 }
 
 
+//Find two vectors that are perpendicular to V1 using Gram-Schmidt method
+inline void XYZArray::GramSchmidt()
+{
+  XYZ U1, U2, U3;
+  XYZ V1 = this->Get(0);
+  XYZ V2(1.0, 0.0, 0.0);
+  XYZ V3(0.0, 1.0, 0.0);
+  //We have to make sure that V1, V2, V3 are independent fro meach other
+  if(abs(V1.z) < 0.0001)
+  {
+    if(abs(V1.x) < 0.0001)
+    {
+      V3 = XYZ(0.0, 0.0, 1.0);
+    }
+    else
+    {
+      V2 = XYZ(0.0, 0.0, 1.0);
+    }
+  }
+
+  //normalize U1
+  U1 = V1.Normalize();
+  U2 = V2 - (U1 * V2.DotProduct(U1));
+  U2.Normalize();
+  U3 = V3 - (U1 * V3.DotProduct(U1)) - (U2 * V3.DotProduct(U2));
+  U3.Normalize();
+  this->Set(0, U2);
+  this->Set(1, U3);
+  this->Set(2, U1);
+}
+
+inline void XYZArray::InvMatrix(XYZArray &Inv)
+{
+  Inv.x[0] = y[1] * z[2] - y[2] * z[1];
+  Inv.y[0] = y[2] * z[0] - y[0] * z[2];
+  Inv.z[0] = y[0] * z[1] - y[1] * z[0];
+
+  Inv.x[1] = x[2] * z[1] - x[1] * z[2];
+  Inv.y[1] = x[0] * z[2] - x[2] * z[0];
+  Inv.z[1] = x[1] * z[0] - x[0] * z[1];
+
+  Inv.x[2] = x[1] * y[2] - x[2] * y[1];
+  Inv.y[2] = x[2] * y[0] - x[0] * y[2];
+  Inv.z[2] = x[0] * y[1] - x[1] * y[0];
+
+  double det = x[0] * Inv.x[0] + x[1] * Inv.y[0] + x[2] * Inv.z[0];
+  Inv.ScaleRange(0, 3, 1.0/det);
+}
+
+inline void XYZArray::TransposeMatrix(XYZArray &Inv)
+{
+  Inv.x[0] = x[0];
+  Inv.x[1] = y[0];
+  Inv.x[2] = z[0];
+
+  Inv.y[0] = x[1];
+  Inv.y[1] = y[1];
+  Inv.y[2] = z[1];
+
+  Inv.z[0] = x[2];
+  Inv.z[1] = y[2];
+  Inv.z[2] = z[2];
+
+}
+
+//Calculate transform of A using dot product
+inline XYZ XYZArray::Transform(const XYZ &A) const
+{
+   XYZ temp;  
+  temp.x = A.x * x[0] + A.y * x[1] + A.z * x[2];
+  temp.y = A.x * y[0] + A.y * y[1] + A.z * y[2];
+  temp.z = A.x * z[0] + A.y * z[1] + A.z * z[2];
+  return temp;
+}
 
 #endif /*XYZ_ARRAY_H*/

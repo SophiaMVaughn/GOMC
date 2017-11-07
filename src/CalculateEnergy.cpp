@@ -321,19 +321,21 @@ Virial CalculateEnergy::ForceCalc(const uint box)
 }
 
 bool CalculateEnergy::FindMolInCavity(std::vector< std::vector<uint> > &mol,
-				      const XYZ& center, const double rmax,
-				      const uint box, const uint kind,
-				      const uint exRate)
+				      const XYZ& center, const XYZ& cavDim,
+				      const XYZArray& invCav, const uint box,
+				      const uint kind, const uint exRate)
 {
   uint k;
   mol.clear();
   mol.resize(molLookup.GetNumKind());
-  if(rmax <= rCut)
+
+  if(cavDim.z <= rCut)
   {
     CellList::Neighbors n = cellList.EnumerateLocal(center, box);
     while (!n.Done())
     {
-      if(currentAxes.InCavity(currentCOM.Get(particleMol[*n]),center,rmax, box))
+      if(currentAxes.InCavity(currentCOM.Get(particleMol[*n]), center, cavDim,
+			      invCav, box))
       {
 	uint molIndex = particleMol[*n];
 	//if molecule can be transfer between boxes
@@ -355,9 +357,9 @@ bool CalculateEnergy::FindMolInCavity(std::vector< std::vector<uint> > &mol,
     MoleculeLookup::box_iterator end = molLookup.BoxEnd(box);  
     while (n != end)
     {
-      if(currentAxes.InCavity(currentCOM.Get(particleMol[*n]), center,rmax,box))
+      if(currentAxes.InCavity(currentCOM.Get(*n), center, cavDim, invCav, box))
       {
-	uint molIndex = particleMol[*n];
+	uint molIndex = *n;
 	//if molecule can be transfer between boxes
 	if(!molLookup.IsNoSwap(molIndex))
 	{
@@ -368,7 +370,7 @@ bool CalculateEnergy::FindMolInCavity(std::vector< std::vector<uint> > &mol,
 	    mol[k].push_back(molIndex);
 	}
       }
-      ++n;
+      n++;
     }
   }
 
@@ -928,5 +930,6 @@ void CalculateEnergy::ForceCorrection(Virial& virial,
     virial.tc = vir;
   }
 }
+
 
 

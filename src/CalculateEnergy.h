@@ -74,8 +74,8 @@ public:
 
   //Finding the molecule inside cavity and store the molecule Index.
   bool FindMolInCavity(std::vector< std::vector<uint> > &mol, const XYZ& center,
-		       const double rmax, const uint box, const uint kind,
-		       const uint exRate);
+		       const XYZ& cavDim, const XYZArray& invCav,
+		       const uint box, const uint kind, const uint exRate);
   
   //! Calculates intermolecular energy (LJ and coulomb) of a molecule
   //!                           were it at molCoords.

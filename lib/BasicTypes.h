@@ -72,7 +72,26 @@ struct XYZ
       *this *= (1 / Length());
       return *this;
    }
-   
+
+  double DotProduct(XYZ const& a)
+  {
+    double sum = 0.0;
+    sum += x * a.x;
+    sum += y * a.y;
+    sum += z * a.z;
+    return sum;
+  }
+
+  //Calc AxB product 
+  XYZ CrossProduct(const XYZ &A, const XYZ &B) const 
+  {
+    XYZ temp;
+    temp.x = A.y * B.z - A.z * B.y;
+    temp.y = A.z * B.x - A.x * B.z;
+    temp.z = A.x * B.y - A.y * B.x;
+  
+return temp;
+  }
 };
 
 #endif /*BASIC_TYPES_H*/

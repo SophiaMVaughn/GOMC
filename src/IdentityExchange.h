@@ -20,10 +20,15 @@ class IdentityExchange : public MoveBase
 
    IdentityExchange(System &sys, StaticVals const& statV) :
     ffRef(statV.forcefield), molLookRef(sys.molLookupRef),
-      MoveBase(sys, statV), rmax(statV.mol.kinds[0].rmax / 2.0) 
+      MoveBase(sys, statV), rmax(statV.mol.kinds[0].cavDim), cav(3), invCav(3)
       {
-	enableID = ffRef.enableID;	
-	volCav = pow(2.0 * rmax, 3);
+	enableID = ffRef.enableID;
+	if(rmax.x >= rmax.y)
+	  rmax.y = rmax.x;
+	else
+	  rmax.x = rmax.y;
+
+	volCav = rmax.x * rmax.y * rmax.z;
 
 	if(enableID)
 	{
@@ -95,8 +100,9 @@ class IdentityExchange : public MoveBase
    bool insertB, enableID;
    uint numInCavA, numInCavB, exchangeRate, kindS, kindL;
 
-   double rmax, volCav;
-   XYZ center;
+   double volCav;
+   XYZ center, rmax;
+   XYZArray cav, invCav;
    double W_tc, W_recip;
    double correct_oldA, correct_newA, self_oldA, self_newA;
    double correct_oldB, correct_newB, self_oldB, self_newB;
@@ -116,15 +122,21 @@ inline uint IdentityExchange::PickMolInCav()
    XYZ temp(prng.randExc(axis.x), prng.randExc(axis.y), prng.randExc(axis.z));
    //Use to shift the new insterted molecule
    center = temp;
+   //Pick random vector anad find two vectors that are perpendicular to V1
+   cav.Set(0, prng.RandomUnitVect());
+   cav.GramSchmidt();
+   //Calculate inverse matrix for cav here Inv = transpose
+   cav.TransposeMatrix(invCav);
 
    //Find the molecule kind 0 in the cavity
-   if(calcEnRef.FindMolInCavity(molInCav, center, rmax, sourceBox, kindS,
-				exchangeRate))
+   if(calcEnRef.FindMolInCavity(molInCav, center, rmax, invCav,
+				sourceBox, kindS, exchangeRate))
    {
      molIndexA.clear();
      kindIndexA.clear();
      molIndexB.clear();
      kindIndexB.clear();
+     //printf("MolS in cav: %d.\n", molInCav[kindS].size());
      //Find the exchangeRate number of molecules kind 0 in cavity
      numInCavA = exchangeRate;
      for(uint n = 0; n < numInCavA; n++)
@@ -142,15 +154,12 @@ inline uint IdentityExchange::PickMolInCav()
 
      //pick a molecule from Large kind in destBox
      numInCavB = 1;
-     state = prng.PickMol(kindS, kindIndexB, molIndexB, numInCavB,
-			  destBox);
-     
+     state = prng.PickMol(kindS, kindIndexB, molIndexB, numInCavB, destBox);    
    }
    else
    {
      //reject the move
      state = mv::fail_state::NO_MOL_OF_KIND_IN_BOX;
-     //printf("Empty Cavity\n");
    }
 
    return state;
@@ -171,11 +180,28 @@ inline uint IdentityExchange::ReplaceMolecule()
 
    if(state == mv::fail_state::NO_FAIL)
    {
+     //Set the V1 to the vector from first to last atom
+     uint pStart = 0;
+     uint pLen = 0;
+     molRef.GetRangeStartLength(pStart, pLen, molIndexA[0]);
+     if(pLen == 1)
+     {
+       cav.Set(0, prng.RandomUnitVect());
+     }
+     else
+     {
+       uint pEnd = pStart + pLen -1;
+       cav.Set(0, boxDimRef.MinImage(coordCurrRef.Difference(pStart, pEnd),
+       				     sourceBox));
+     }
+     cav.GramSchmidt();
+     //Calculate inverse matrix for cav. Here Inv = Transpose 
+     cav.TransposeMatrix(invCav);
      //Use to shift to the COM of new molecule
      center = comCurrRef.Get(molIndexA[0]);
      //find how many of KindS exist in this center
-     calcEnRef.FindMolInCavity(molInCav, center, rmax, sourceBox, kindS,
-			       exchangeRate);
+     calcEnRef.FindMolInCavity(molInCav, center, rmax, invCav, sourceBox,
+			       kindS, exchangeRate);
      //pick exchangeRate number of Small molecule from dest box
      state = prng.PickMol(kindL, kindIndexB, molIndexB, numInCavB, destBox);  
    }
@@ -291,6 +317,8 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
        coordCurrRef.CopyRange(molA, pStartA[n], 0, pLenA[n]);
        boxDimRef.UnwrapPBC(molA, sourceBox, comCurrRef.Get(molIndexA[n]));
        oldMolA[n].SetCoords(molA, 0);
+       //copy cav matrix to slant the old trial of molA
+       oldMolA[n].SetCavMatrix(cav);
        //set coordinate of moleA to newMolA, later it will shift to center
        newMolA[n].SetCoords(molA, 0);
      }
@@ -303,6 +331,8 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
        oldMolB[n].SetCoords(molB, 0);
        //set coordinate of moleB to newMolB, later it will shift to tempD
        newMolB[n].SetCoords(molB, 0);
+       //copy cav matrix to slant the new trial of molB
+       newMolB[n].SetCavMatrix(cav);
      }
 
      XYZ axisD = boxDimRef.GetAxis(destBox);        
@@ -488,8 +518,8 @@ inline double IdentityExchange::GetCoeff() const
 #elif ENSEMBLE == GCMC
   if(ffRef.isFugacity)
   {
-    double delA = (BETA * molRef.kinds[kindIndexA[0]].chemPot * numInCavA);
-    double insB = (BETA * molRef.kinds[kindIndexB[0]].chemPot * numInCavB);
+    double delA = molRef.kinds[kindIndexA[0]].chemPot * numInCavA;
+    double insB = molRef.kinds[kindIndexB[0]].chemPot * numInCavB;
     if(insertB)
     {
       //kindA is the small molecule
@@ -513,8 +543,8 @@ inline double IdentityExchange::GetCoeff() const
   }
   else
   {
-    double delA = exp(-BETA * molRef.kinds[kindIndexA[0]].chemPot * numInCavA);
-    double insB = exp(BETA * molRef.kinds[kindIndexB[0]].chemPot * numInCavB);
+    double delA = (-BETA * molRef.kinds[kindIndexA[0]].chemPot * numInCavA);
+    double insB = (BETA * molRef.kinds[kindIndexB[0]].chemPot * numInCavB);
     if(insertB)
     {
       //kindA is the small molecule
@@ -523,7 +553,7 @@ inline double IdentityExchange::GetCoeff() const
 	Factorial(totMolInCav - exchangeRate);
 
       double ratioV = volSource / pow(volCav, exchangeRate);
-      return delA * insB * ratioF * ratioV / (numTypeBSource + 1.0);
+      return exp(delA + insB) * ratioF * ratioV / (numTypeBSource + 1.0);
     }
     else
     {
@@ -533,7 +563,7 @@ inline double IdentityExchange::GetCoeff() const
 	Factorial(totMolInCav + exchangeRate);
 
       double ratioV = pow(volCav, exchangeRate) / volSource;
-      return delA * insB * ratioF * ratioV * numTypeASource;
+      return exp(delA + insB) * ratioF * ratioV * numTypeASource;
     }
   }
 #endif
@@ -561,7 +591,7 @@ inline void IdentityExchange::ShiftMol(const uint n, const uint from,
 inline void IdentityExchange::RecoverMol(const uint n, const uint from,
 					 const uint to)
 {
-  if(from == 0)
+  if(to == 0)
   {
     XYZArray molA(pLenA[n]);
     oldMolA[n].GetCoords().CopyRange(molA, 0, 0, pLenA[n]);
@@ -624,7 +654,6 @@ inline void IdentityExchange::Accept(const uint rejectState, const uint step)
 	Wrat *= newMolB[n].GetWeight() / oldMolB[n].GetWeight();
       }
 
-      //std::cout << "Wrat: " << Wrat << std::endl;
       result = prng() < molTransCoeff * Wrat;
   
       if(result)
@@ -677,17 +706,16 @@ inline void IdentityExchange::Accept(const uint rejectState, const uint step)
 	for(uint n = 0; n < numInCavA; n++)
 	{
 	  cellList.RemoveMol(molIndexA[n], destBox, coordCurrRef);
-	  RecoverMol(n, sourceBox, destBox);
+	  RecoverMol(n, destBox, sourceBox);
 	  cellList.AddMol(molIndexA[n], sourceBox, coordCurrRef);
 	}
 	//transfer molB from sourceBox to dest
 	for(uint n = 0; n < numInCavB; n++)
 	{
 	  cellList.RemoveMol(molIndexB[n], sourceBox, coordCurrRef);
-	  RecoverMol(n, destBox, sourceBox);
+	  RecoverMol(n, sourceBox, destBox);
 	  cellList.AddMol(molIndexB[n], destBox, coordCurrRef);
 	}
-	
       }
    }
    else  //else we didn't even try because we knew it would fail

@@ -13,7 +13,7 @@
 
 PDBOutput::PDBOutput(System & sys, StaticVals const& statV) :
   moveSetRef(sys.moveSettings), molLookupRef(sys.molLookupRef),
-  coordCurrRef(sys.coordinates),
+  coordCurrRef(sys.coordinates), comCurrRef(sys.com),
   pStr(coordCurrRef.Count(),GetDefaultAtomStr()),
   boxDimRef(sys.boxDimRef), molRef(statV.mol) { }
 
@@ -296,7 +296,7 @@ void PDBOutput::PrintAtoms(const uint b, std::vector<uint> & mBox)
     //Loop through particles in mol.
     uint beta = molLookupRef.GetBeta(m);
     molRef.GetRangeStartStop(pStart, pEnd, m);
-    XYZ ref = coordCurrRef.Get(pStart);
+    XYZ ref = comCurrRef.Get(m);
     inThisBox = (mBox[m]==b);
     for (uint p = pStart; p < pEnd; ++p)
     {
@@ -330,7 +330,7 @@ void PDBOutput::PrintAtomsRebuildRestart(const uint b)
       uint molI = molLookupRef.GetMolNum(kI, k, b);
       uint beta = molLookupRef.GetBeta(molI);
       molRef.GetRangeStartStop(pStart, pEnd, molI);
-      XYZ ref = coordCurrRef.Get(pStart);
+      XYZ ref = comCurrRef.Get(molI);
       for (uint p = pStart; p < pEnd; ++p)
       {
         std::string line = GetDefaultAtomStr();

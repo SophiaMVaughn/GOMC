@@ -106,22 +106,20 @@ public:
     loc = temp;
   }
 
-  //Used to pick first position in cavity
-  void FillWithRandomInCavity(XYZArray & loc, const uint len,
-			      const double rmax, XYZ const& center)
+  XYZ RandomUnitVect()
   {
-    for (uint i = 0; i < len; ++i)
-    {
-      loc.Set(i, center.x + SymExc(rmax), center.y + SymExc(rmax), center.z +
-	      SymExc(rmax));
-    }
+    //XYZ temp;
+    //temp.x = SymExc(1.0);
+    //temp.y = SymExc(1.0);
+    //temp.z = SymExc(1.0);
+    //return temp;
+    return PickOnUnitSphere();
   }
 
   //Used to pick first position in cavity
-  void FillWithRandomInCavity(XYZ &loc, const double rmax, XYZ const& center)
+  void FillWithRandomInCavity(XYZ &loc, XYZ const& cavDim)
   {
-    XYZ temp(center.x + SymExc(rmax), center.y + SymExc(rmax), center.z +
-		    SymExc(rmax));
+    XYZ temp(SymExc(cavDim.x/2.0), SymExc(cavDim.y/2.0), SymExc(cavDim.z/2.0));
     loc = temp;
   }
 

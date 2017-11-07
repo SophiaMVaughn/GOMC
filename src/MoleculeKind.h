@@ -86,7 +86,7 @@ class MoleculeKind
    double molMass;
    
    double * atomMass;
-   double rmax;
+   XYZ cavDim;
    uint exchangeRatio;
    
 #if ENSEMBLE == GCMC

@@ -120,14 +120,18 @@ class TrialMol
       bool AtomExists(uint index) const { return atomBuilt[index]; }
 
       //!Copies 1 atom's worth of coordinates to sCoords
-      void SetSeed(const XYZ& coords, const double rmax, const bool inCav,
+      void SetSeed(const XYZ& coords, const XYZ& rmax, const bool inCav,
 		   const bool fixCOM);
       void SetSeed(const bool inCav, const bool fixCOM);
 
+      XYZ Transform(const XYZ& a) {return cavMatrix.Transform(a);}
+      void TransposeMatrix(XYZArray &invMatrix)
+      {return cavMatrix.TransposeMatrix(invMatrix);}
       bool HasCav() const {return seedInCav;}
       bool SeedFix() const {return seedFix;}
+      void SetCavMatrix(const XYZArray& matrix);
       XYZ GetSeed() const {return sCoords;}
-      double GetRmax() const {return sRmax;}
+      XYZ GetRmax() const {return sRmax;}
       //return unwrap com of tcoords so tcoords need to be set
       XYZ GetCOM();
 
@@ -139,11 +143,10 @@ class TrialMol
       const MoleculeKind* kind;
       const BoxDimensions* axes;
       uint box;
-      XYZArray tCoords;
-      XYZ sCoords; //The center of radius
+      XYZArray tCoords, cavMatrix;
+      XYZ sCoords, sRmax; //The center of radius and cavity dimensions
       Energy en;
       double totalWeight;
-      double sRmax;   //The radius of inserting molecule
       bool* atomBuilt;
       bool seedInCav, seedFix;
       RotationMatrix growthToWorld;

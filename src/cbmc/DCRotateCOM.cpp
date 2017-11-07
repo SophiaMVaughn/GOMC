@@ -7,13 +7,48 @@
 #include "Forcefield.h" 
 #include "PRNG.h" 
 #include "NumLib.h" 
- 
+/*
+This file is only called from IdentityExchange and IntraIdentityExchange file.
+This file depend on ensemble kind, swap the COM of small molecules with one 
+large molecule.
+GCMC:
+Deleting large molecule: in a cavity oriented and centered at COM of L-Mol
+BuildOld: perform nLJ trial around the axis-z(backbone of Large Molecule)
+BuildNew: perform fLJ for COM of S-Mol, for each fLJ, perform nLJ to rotate 
+          around COM of it in sphere.
+
+Insert large molecule: in a cavity random oriented and centered 
+BuildOld: perform fLJ for COM of S-Mol, for each fLJ, perform nLJ to rotate 
+          around COM of it in sphere.
+BuildNew: insert the COM of L-Mol to the center of cavity and perform nLJ trial
+          around the axis-z(cavity largest length)
+
+GEMC: Each molecule type has NEW and OLD which is similar to GCMC. However, to 
+      insert or delete the molecule from less dense box, we perform trial in 
+      the whole simulation box.
+
+*/ 
+
 namespace cbmc 
 { 
  
    DCRotateCOM::DCRotateCOM(DCData* data) 
-     : data(data) {} 
+     : data(data), rotateMatrix(3), invMatrix(3)
+   {
+     rotateMatrix.Set(0, 0.0, 0.0, 0.0);
+     rotateMatrix.Set(1, 0.0, 0.0, 0.0);
+     rotateMatrix.Set(2, 0.0, 0.0, 1.0);
+   } 
  
+   void DCRotateCOM::RandRotateZ()
+   {
+     PRNG& prng = data->prng;
+     double theta = prng.randExc(2 * M_PI);
+     double cosTheta = cos(theta);
+     double sinTheta = sin(theta);
+     rotateMatrix.Set(0, cosTheta, sinTheta, 0.0);
+     rotateMatrix.Set(1, -sinTheta, cosTheta, 0.0);
+   }
  
    void DCRotateCOM::PrepareNew(TrialMol& newMol, uint molIndex) 
    { 
@@ -38,7 +73,14 @@ namespace cbmc
      {
        //new center of mass that need to be transfered 
        if(newMol.HasCav())
-	 prng.FillWithRandomInCavity(COM, newMol.GetRmax(), newMol.GetSeed());
+       {
+	 //Pick molecule in cav dimension
+	 prng.FillWithRandomInCavity(COM, newMol.GetRmax());
+	 //rotate using cavity matrix
+	 COM = newMol.Transform(COM);
+	 //add center 
+	 COM += newMol.GetSeed();
+       }
        else
 	 prng.FillWithRandom(COM, data->axes.GetAxis(newMol.GetBox())); 
      }
@@ -68,7 +110,14 @@ namespace cbmc
      PRNG& prng = data->prng;
      //new center of mass that need to be transfered
      if(oldMol.HasCav())
-       prng.FillWithRandomInCavity(COM, oldMol.GetRmax(), oldMol.GetSeed());
+     {
+       //Pick molecule in cav dimension
+       prng.FillWithRandomInCavity(COM, oldMol.GetRmax());
+       //rotate using cavity matrix
+       COM = oldMol.Transform(COM);
+       //add center 
+       COM += oldMol.GetSeed();
+     }
      else
        prng.FillWithRandom(COM, data->axes.GetAxis(oldMol.GetBox())); 
 
@@ -94,6 +143,7 @@ namespace cbmc
       double* ljWeights = data->ljWeightsT; 
       double* inter = data->interT; 
       double* real = data->realT; 
+      RotationMatrix spin;
  
       std::fill_n(inter, totalTrials, 0.0); 
       std::fill_n(real, totalTrials, 0.0); 
@@ -110,6 +160,12 @@ namespace cbmc
       {
 	fLJTrials = 1;
 	totalTrials = nLJTrials;
+	//find the inverse matrix of molecule that we insert
+	XYZ backBone = newMol.GetCoords().Difference(0, atomNumber - 1);
+	XYZArray T(3);
+	T.Set(0, backBone);
+	T.GramSchmidt();
+	T.TransposeMatrix(invMatrix);
       }
  
 
@@ -131,14 +187,36 @@ namespace cbmc
 	//Rotational trial the molecule around COM
 	for (uint r = nLJTrials; r-- > 0;) 
 	{ 
-	  //convert chosen torsion to 3D positions 
-	  RotationMatrix spin = 
-            RotationMatrix::UniformRandom(prng(), prng(), prng()); 
+	  if(newMol.SeedFix())
+	  {
+	    //we only perform rotation around z axis
+	    RandRotateZ();
+	  }
+	  else
+	  {
+	    //convert chosen torsion to 3D positions 
+	    spin = RotationMatrix::UniformRandom(prng(), prng(), prng()); 
+	  }
+
 	  for (uint a = 0; a < atomNumber; ++a) 
 	  { 
-	    //find positions 
-	    multiPosRotions[a].Set(index + r,
-				   spin.Apply(multiPosRotions[a][index])); 
+	    if(newMol.SeedFix())
+	    {
+	      XYZ coord = multiPosRotions[a][index];
+	      //transform backbone to z axis
+	      coord = invMatrix.Transform(coord);
+	      //rotate around z
+	      coord = rotateMatrix.Transform(coord);
+	      //transfer backbone to cavity orientation
+	      coord = newMol.Transform(coord);
+	      multiPosRotions[a].Set(index + r, coord); 
+	    }
+	    else
+	    {
+	      //find positions 
+	      multiPosRotions[a].Set(index + r,
+				     spin.Apply(multiPosRotions[a][index])); 
+	    }
 	    multiPosRotions[a].Add(index + r, center); 
 	  } 
 	}
@@ -183,7 +261,8 @@ namespace cbmc
       double* ljWeights = data->ljWeightsT; 
       double* inter = data->interT; 
       double* real = data->realT; 
- 
+      RotationMatrix spin;
+
       std::fill_n(inter, totalTrials, 0.0); 
       std::fill_n(real, totalTrials, 0.0);  
       std::fill_n(ljWeights, totalTrials, 0.0); 
@@ -199,6 +278,8 @@ namespace cbmc
       {
 	fLJTrials = 1;
 	totalTrials = nLJTrials;
+	//find the inverse matrix of cavity
+	oldMol.TransposeMatrix(invMatrix);
       }
 
       const XYZ orgCenter = COM;
@@ -224,14 +305,36 @@ namespace cbmc
 	  if((index + r) == 0)
 	    continue;
 
-	  //convert chosen torsion to 3D positions 
-	  RotationMatrix spin = 
-            RotationMatrix::UniformRandom(prng(), prng(), prng()); 
+	  if(oldMol.SeedFix())
+	  {
+	    //we only perform rotation around z axis
+	    RandRotateZ();
+	  }
+	  else
+	  {
+	    //convert chosen torsion to 3D positions 
+	   spin =  RotationMatrix::UniformRandom(prng(), prng(), prng()); 
+	  }
+
 	  for (uint a = 0; a < atomNumber; ++a) 
 	  { 
-            //find positions 
-            multiPosRotions[a].Set(index + r,
-				   spin.Apply(multiPosRotions[a][index])); 
+	    if(oldMol.SeedFix())
+	    {
+	      XYZ coord = multiPosRotions[a][index];
+	      //transform backbone to z axis
+	      coord = invMatrix.Transform(coord);
+	      //rotate around z
+	      coord = rotateMatrix.Transform(coord);
+	      //transfer backbone to cavity orientation
+	      coord = oldMol.Transform(coord);
+	      multiPosRotions[a].Set(index + r, coord); 
+	    }
+	    else
+	    {
+	      //find positions 
+	      multiPosRotions[a].Set(index + r,
+				     spin.Apply(multiPosRotions[a][index])); 
+	    }
             multiPosRotions[a].Add(index + r, center); 
 	  } 
 	}

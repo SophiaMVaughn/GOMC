@@ -7,6 +7,7 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 #ifndef DCROTATECOM_H
 #define DCROTATECOM_H
 #include "DCComponent.h"
+#include "XYZArray.h"
 #include "CBMC.h"
 
 namespace mol_setup { class MolKind; }
@@ -24,11 +25,16 @@ namespace cbmc {
       void PickTransferCOMOld(TrialMol& oldMol, uint molIndex);
       void BuildOld(TrialMol& oldMol, uint molIndex);
       void BuildNew(TrialMol& newMol, uint molIndex);
+      void RandRotateZ();
       DCComponent* Clone() { return new DCRotateCOM(*this); };
 
    private:
       DCData* data;
       XYZ COM, oldCOM;
+      //rotation matrix around z axis
+      XYZArray rotateMatrix;
+      //inverse of matrix
+      XYZArray invMatrix;
       uint atomNumber;
    };
 }

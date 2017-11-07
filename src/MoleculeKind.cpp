@@ -74,7 +74,7 @@ void MoleculeKind::Init
    //##################################
    if(setup.config.sys.exchangeVal.enable)
    {
-     rmax = setup.config.sys.exchangeVal.rmax;
+     cavDim = setup.config.sys.exchangeVal.rmax;
      std::map<std::string, uint>::const_iterator kindRatioIt =
        setup.config.sys.exchangeVal.exRatio.find(name),
        lastKind = setup.config.sys.exchangeVal.exRatio.end();

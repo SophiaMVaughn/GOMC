@@ -76,6 +76,7 @@ private:
   BoxDimensions& boxDimRef;
   Molecules const& molRef;
   Coordinates & coordCurrRef;
+  COM & comCurrRef;
 
   Writer outF[BOX_TOTAL];
   //NEW_RESTART_CODE

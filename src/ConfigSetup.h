@@ -192,8 +192,8 @@ namespace config_setup
 
    struct ExchangeVal 
    { 
-     bool enable;
-     double rmax;
+     bool enable, read;
+     XYZ rmax;
      std::map<std::string, uint> exRatio; 
    };
  

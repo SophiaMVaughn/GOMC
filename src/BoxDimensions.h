@@ -54,6 +54,9 @@ public:
   //Vector btwn two points, accounting for PBC, on an individual axis
   XYZ MinImage(XYZ rawVec, const uint b) const;
 
+  //Vector btwn two points, accounting for PBC, on an individual axis
+  XYZ MinImageUnSigned(XYZ rawVec, const uint b) const;
+
   //Wrap all coordinates in object.
   void WrapPBC(XYZArray & arr, const uint b) const;
 
@@ -116,8 +119,8 @@ public:
     return (distSq < rCutSq);
   }
 
-  bool InCavity(XYZ const& arr, XYZ const& center, double const rmax,
-		const uint b) const;
+  bool InCavity(XYZ const& arr, XYZ const& center, XYZ const& cavDim,
+		XYZArray const& invCav, const uint b) const;
 
   //Dist squared , two different coordinate arrays
   void GetDistSq(double & distSq, XYZArray const& arr1,
@@ -235,13 +238,21 @@ inline XYZ BoxDimensions::MinImage(XYZ rawVec, const uint b) const
   return rawVec;
 }
 
+inline XYZ BoxDimensions::MinImageUnSigned(XYZ rawVec, const uint b) const
+{
+  rawVec.x = MinImage(rawVec.x, axis.x[b], halfAx.x[b]);
+  rawVec.y = MinImage(rawVec.y, axis.y[b], halfAx.y[b]);
+  rawVec.z = MinImage(rawVec.z, axis.z[b], halfAx.z[b]);
+  return rawVec;
+}
+
 //Dist. btwn two points, accounting for PBC, on an individual axis
 //
 //Throws out sign (as per Brock's suggestion) as we don't care about it
 //and thus can eliminate a branch and (potentially) one compare.
 //
-inline double BoxDimensions::MinImage
-(double& raw, const double ax, const double halfAx) const
+inline double BoxDimensions::MinImage(double& raw, const double ax,
+				      const double halfAx) const
 {
   raw = fabs(raw);
   //If shorter over periodic boundary, get that dist.
@@ -255,8 +266,8 @@ inline double BoxDimensions::MinImage
 #endif
 }
 
-inline double BoxDimensions::MinImageSigned(double raw,
-    double ax, double halfAx) const
+inline double BoxDimensions::MinImageSigned(double raw, double ax,
+					    double halfAx) const
 {
   if (raw > halfAx)
     raw -= ax;
@@ -395,12 +406,15 @@ inline bool BoxDimensions::InRcut
 }
 
 inline bool BoxDimensions::InCavity(XYZ const& arr, XYZ const& center,
-				    double const rmax, const uint b) const
+				    XYZ const& cavDim, XYZArray const& invCav,
+				    const uint b) const
 {
-  double rmaxSq = rmax * rmax;
-  XYZ dist = MinImage(arr - center, b);
-  XYZ distSq = dist * dist;
-  if(distSq.x > rmaxSq || distSq.y > rmaxSq || distSq.z > rmaxSq)
+  XYZ halfDim = cavDim * 0.5;
+  halfDim *= halfDim;
+  XYZ diff = MinImage(arr - center, b);
+  diff = invCav.Transform(diff);
+  diff *= diff;
+  if(diff.x > halfDim.x || diff.y > halfDim.y || diff.z > halfDim.z)
     return false;
   else
     return true;
@@ -410,8 +424,8 @@ inline bool BoxDimensions::InCavity(XYZ const& arr, XYZ const& center,
 #endif
 
 inline void BoxDimensions::GetDistSq(double & distSq, XYZArray const& arr1,
-                                     const uint i, XYZArray const& arr2, const uint j,
-                                     const uint b) const
+                                     const uint i, XYZArray const& arr2,
+				     const uint j, const uint b) const
 {
   XYZ dist = MinImage(arr1.Difference(i, arr2, j), b);
   distSq = dist.x*dist.x + dist.y*dist.y + dist.z*dist.z;
