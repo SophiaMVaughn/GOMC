@@ -82,8 +82,8 @@ class IdentityExchange : public MoveBase
 
  private:
 
-   void ShiftMol(const uint n, const uint from, const uint to);
-   void RecoverMol(const uint n, const uint from, const uint to);
+   void ShiftMol(const bool A, const uint n, const uint from, const uint to);
+   void RecoverMol(const bool A, const uint n, const uint from, const uint to);
    uint PickMolInCav();
    uint ReplaceMolecule();
    void CalcTc();
@@ -401,7 +401,7 @@ inline uint IdentityExchange::Transform()
   for(uint n = 0; n < numInCavA; n++)
   {
     molRef.kinds[kindIndexA[n]].BuildIDNew(newMolA[n], molIndexA[n]);
-    ShiftMol(n, sourceBox, destBox);
+    ShiftMol(true, n, sourceBox, destBox);
     cellList.AddMol(molIndexA[n], destBox, coordCurrRef);
   }
 
@@ -409,7 +409,7 @@ inline uint IdentityExchange::Transform()
   for(uint n = 0; n < numInCavB; n++)
   {
     molRef.kinds[kindIndexB[n]].BuildIDNew(newMolB[n], molIndexB[n]);
-    ShiftMol(n, destBox, sourceBox);
+    ShiftMol(false, n, destBox, sourceBox);
     cellList.AddMol(molIndexB[n], sourceBox, coordCurrRef);    
   }
   
@@ -569,47 +569,47 @@ inline double IdentityExchange::GetCoeff() const
 #endif
 }
 
-inline void IdentityExchange::ShiftMol(const uint n, const uint from,
-				       const uint to)
+inline void IdentityExchange::ShiftMol(const bool A, const uint n,
+				       const uint from, const uint to)
 {
-  if(from == 0)
+  if(A)
   {
     //Add type A to dest box
     newMolA[n].GetCoords().CopyRange(coordCurrRef, 0, pStartA[n], pLenA[n]);
-    comCurrRef.SetNew(molIndexA[n], destBox);
-    molLookRef.ShiftMolBox(molIndexA[n], sourceBox, destBox, kindIndexA[n]);
+    comCurrRef.SetNew(molIndexA[n], to);
+    molLookRef.ShiftMolBox(molIndexA[n], from, to, kindIndexA[n]);
   }
   else
   {
     //Add type B to source box
     newMolB[n].GetCoords().CopyRange(coordCurrRef, 0, pStartB[n], pLenB[n]);
-    comCurrRef.SetNew(molIndexB[n], sourceBox);
-    molLookRef.ShiftMolBox(molIndexB[n], destBox, sourceBox, kindIndexB[n]);
+    comCurrRef.SetNew(molIndexB[n], from);
+    molLookRef.ShiftMolBox(molIndexB[n], from, to, kindIndexB[n]);
   }
 }
 
-inline void IdentityExchange::RecoverMol(const uint n, const uint from,
-					 const uint to)
+inline void IdentityExchange::RecoverMol(const bool A, const uint n,
+					 const uint from, const uint to)
 {
-  if(to == 0)
+  if(A)
   {
     XYZArray molA(pLenA[n]);
     oldMolA[n].GetCoords().CopyRange(molA, 0, 0, pLenA[n]);
-    boxDimRef.WrapPBC(molA, sourceBox);
+    boxDimRef.WrapPBC(molA, to);
 
     molA.CopyRange(coordCurrRef, 0, pStartA[n], pLenA[n]);
-    comCurrRef.SetNew(molIndexA[n], sourceBox);
-    molLookRef.ShiftMolBox(molIndexA[n], destBox, sourceBox, kindIndexA[n]);
+    comCurrRef.SetNew(molIndexA[n], to);
+    molLookRef.ShiftMolBox(molIndexA[n], from, to, kindIndexA[n]);
   }
   else
   {
     XYZArray molB(pLenB[n]);
     oldMolB[n].GetCoords().CopyRange(molB, 0, 0, pLenB[n]);
-    boxDimRef.WrapPBC(molB, destBox);
+    boxDimRef.WrapPBC(molB, to);
 
     molB.CopyRange(coordCurrRef, 0, pStartB[n], pLenB[n]);
-    comCurrRef.SetNew(molIndexB[n], destBox);
-    molLookRef.ShiftMolBox(molIndexB[n], sourceBox, destBox, kindIndexB[n]);
+    comCurrRef.SetNew(molIndexB[n], to);
+    molLookRef.ShiftMolBox(molIndexB[n], from, to, kindIndexB[n]);
   }
 }
 
@@ -706,14 +706,14 @@ inline void IdentityExchange::Accept(const uint rejectState, const uint step)
 	for(uint n = 0; n < numInCavA; n++)
 	{
 	  cellList.RemoveMol(molIndexA[n], destBox, coordCurrRef);
-	  RecoverMol(n, destBox, sourceBox);
+	  RecoverMol(true, n, destBox, sourceBox);
 	  cellList.AddMol(molIndexA[n], sourceBox, coordCurrRef);
 	}
 	//transfer molB from sourceBox to dest
 	for(uint n = 0; n < numInCavB; n++)
 	{
 	  cellList.RemoveMol(molIndexB[n], sourceBox, coordCurrRef);
-	  RecoverMol(n, sourceBox, destBox);
+	  RecoverMol(false, n, sourceBox, destBox);
 	  cellList.AddMol(molIndexB[n], destBox, coordCurrRef);
 	}
       }
