@@ -11,22 +11,41 @@
 This file is only called from IdentityExchange and IntraIdentityExchange file.
 This file depend on ensemble kind, swap the COM of small molecules with one 
 large molecule.
+
 GCMC:
-Deleting large molecule: in a cavity oriented and centered at COM of L-Mol
-BuildOld: perform nLJ trial around the axis-z(backbone of Large Molecule)
+Deleting large molecule: Place a cavity on the selected Large Molecule with    
+                         center at L-Mol COM and orientation of its backbone
+BuildOld: perform nLJ trial around the backbone of Large Molecule.
 BuildNew: perform fLJ for COM of S-Mol, for each fLJ, perform nLJ to rotate 
-          around COM of it in sphere.
+          around COM in sphere.
 
-Insert large molecule: in a cavity random oriented and centered 
-BuildOld: perform fLJ for COM of S-Mol, for each fLJ, perform nLJ to rotate 
-          around COM of it in sphere.
+Insert large molecule: in a random oriented cavity and random center 
+BuildOld: perform fLJ for COM of S-Mol inside the cavity, for each fLJ,
+          perform nLJ to rotate around its COM in sphere.
 BuildNew: insert the COM of L-Mol to the center of cavity and perform nLJ trial
-          around the axis-z(cavity largest length)
-
+          around the axis(cavity largest length-c)
+###############################################################################
 GEMC: Each molecule type has NEW and OLD which is similar to GCMC. However, to 
-      insert or delete the molecule from less dense box, we perform trial in 
-      the whole simulation box.
+      insert or delete the Lrge molecule from dense box.
+Deleting large molecule:Place a cavity on the selected Large Molecule with 
+                        center at L-Mol COM and orientation of its backbone
+BuildOldL: perform nLJ trial around the backbone of Large Molecule.
+BuildNewL: perform fLJ for COM of L-Mol, for each fLJ, perform nLJ to rotate 
+           around COM in sphere.
+BuildOldS: perform fLJ for COM of S-Mol, for each fLJ, perform nLJ to rotate 
+           around its COM in sphere.
+BuildNewS: perform fLJ for COM of S-Mol, for each fLJ, perform nLJ to rotate 
+           around COM in sphere.
 
+Insert large molecule: In a random oriented cavity and random center.
+BuildOldS: perform fLJ for COM of S-Mol inside the cavity, for each fLJ,
+           perform nLJ to rotate around its COM in sphere.
+BuildNewS: perform fLJ for COM of S-Mol, for each fLJ, perform nLJ to rotate 
+           around COM in sphere.
+BuildOldL: perform fLJ for COM of L-Mol, for each fLJ, perform nLJ to rotate 
+           around COM in sphere.
+BuildNewL: Insert the COM of L-Mol to the center of cavity and perform nLJ trial
+           around the axis(cavity largest length-c)
 */ 
 
 namespace cbmc 
@@ -157,7 +176,10 @@ namespace cbmc
       }
 
       if(atomNumber == 1)
+      {
 	nLJTrials = 1;
+	totalTrials = fLJTrials;
+      }
 
       if(newMol.SeedFix())
       {
@@ -255,7 +277,7 @@ namespace cbmc
  
       newMol.AddEnergy(Energy(0.0, 0.0, inter[winner], real[winner], 0.0, 0.0,
 			      0.0)); 
-      newMol.MultWeight(stepWeight); 
+      newMol.MultWeight(stepWeight / totalTrials); 
 
       delete[] multiPosRotions; 
    } 
@@ -286,7 +308,10 @@ namespace cbmc
       }
 
       if(atomNumber == 1)
+      {
 	nLJTrials = 1;
+	totalTrials = fLJTrials;
+      }
 
       if(oldMol.SeedFix())
       {
@@ -377,7 +402,7 @@ namespace cbmc
       } 
  
       oldMol.AddEnergy(Energy(0.0, 0.0, inter[0], real[0], 0.0, 0.0, 0.0)); 
-      oldMol.MultWeight(stepWeight); 
+      oldMol.MultWeight(stepWeight / totalTrials); 
 
       delete[] multiPosRotions; 
    }

@@ -21,7 +21,7 @@ class IdentityExchange : public MoveBase
    IdentityExchange(System &sys, StaticVals const& statV) :
     ffRef(statV.forcefield), molLookRef(sys.molLookupRef),
       MoveBase(sys, statV), rmax(statV.mol.kinds[0].cavDim), cavA(3), 
-      cavB(3), invCavA(3)
+      invCavA(3)
       {
 	enableID = ffRef.enableID;
 	if(rmax.x >= rmax.y)
@@ -103,7 +103,7 @@ class IdentityExchange : public MoveBase
 
    double volCav;
    XYZ center, rmax;
-   XYZArray cavA, cavB, invCavA;
+   XYZArray cavA, invCavA;
    double W_tc, W_recip;
    double correct_oldA, correct_newA, self_oldA, self_newA;
    double correct_oldB, correct_newB, self_oldB, self_newB;
@@ -156,25 +156,6 @@ inline uint IdentityExchange::PickMolInCav()
      //pick a molecule from Large kind in destBox
      numInCavB = 1;
      state = prng.PickMol(kindS, kindIndexB, molIndexB, numInCavB, destBox);
-     if(state == mv::fail_state::NO_MOL_OF_KIND_IN_BOX)
-     {
-       //We need this to rotate Big molecule in destBox of oldMolB
-       //Set the V1 to the vector from first to last atom
-       uint pStart = 0;
-       uint pLen = 0;
-       molRef.GetRangeStartLength(pStart, pLen, molIndexB[0]);
-       if(pLen == 1)
-       {
-	 cavB.Set(0, prng.RandomUnitVect());
-       }
-       else
-       {
-	 uint pEnd = pStart + pLen -1;
-	 cavB.Set(0, boxDimRef.MinImage(coordCurrRef.Difference(pStart, pEnd),
-					destBox));
-       }
-       cavB.GramSchmidt();
-     }
    }
    else
    {
@@ -217,9 +198,6 @@ inline uint IdentityExchange::ReplaceMolecule()
      cavA.GramSchmidt();
      //Calculate inverse matrix for cav. Here Inv = Transpose 
      cavA.TransposeMatrix(invCavA);
-     //Find a random orientation for LargeMol backbone to be inserted in destBox
-     cavB.Set(0, prng.RandomUnitVect());
-     cavB.GramSchmidt();
      //Use to shift to the COM of new molecule
      center = comCurrRef.Get(molIndexA[0]);
      //find how many of KindS exist in this center
@@ -345,9 +323,6 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
        newMolA[n].SetCoords(molA, 0); 
        //copy cavA matrix to slant the old trial of molA
        oldMolA[n].SetCavMatrix(cavA);
-       //copy cavB matrix to slant the new trial of molA. Its important if molA
-       //is the Large kind. If its small kind, we will not use it
-       newMolA[n].SetCavMatrix(cavB);
      }
 
      for(uint n = 0; n < numInCavB; n++)
@@ -358,9 +333,6 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
        oldMolB[n].SetCoords(molB, 0);
        //set coordinate of moleB to newMolB, later it will shift to tempD
        newMolB[n].SetCoords(molB, 0);
-       //copy cavB matrix to slant the old trial of molB. Its important if molB
-       //is the Large kind. If its small kind, we will not use it
-       oldMolB[n].SetCavMatrix(cavB);
        //copy cavA matrix to slant the new trial of molB
        newMolB[n].SetCavMatrix(cavA);
      }
@@ -372,7 +344,8 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
 	 //Inserting molB from destBox to the center of cavity in sourceBox
 	 newMolB[n].SetSeed(center, rmax, true, true);
 	 //perform rotational trial move in destBox for oldMolB
-	 oldMolB[n].SetSeed(false, true);
+	 //oldMolB[n].SetSeed(false, true);
+	 oldMolB[n].SetSeed(false, false);
        }
        else
        {
@@ -388,7 +361,8 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
        if(kindIndexA[0] == kindL)
        {
 	 //Inserting molA from sourceBox to destBox
-	 newMolA[n].SetSeed(false, true);
+	 //newMolA[n].SetSeed(false, true);
+	 newMolA[n].SetSeed(false, false);
 	 //perform rotational trial move on COM for oldMolA
 	 oldMolA[n].SetSeed(center, rmax, true, true);
        }
