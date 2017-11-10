@@ -10,8 +10,8 @@ using std::vector;
 
 // Identity Exchange Move:
 //
-// insert the molecule A inside the cavity that has the size of the molecule B
-// and vice versa. Only 1 trial must be perform for the first seed.
+// Swapping one Large molecule with one or more small molecule in dense phase 
+// and vice versa.
 // Mohammad Soroush Barhaghi. July 2017
 
 class IdentityExchange : public MoveBase
