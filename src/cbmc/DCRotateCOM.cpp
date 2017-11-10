@@ -156,12 +156,23 @@ namespace cbmc
         multiPosRotions[i] = XYZArray(totalTrials); 
       }
 
+      if(atomNumber == 1)
+	nLJTrials = 1;
+
       if(newMol.SeedFix())
       {
 	fLJTrials = 1;
 	totalTrials = nLJTrials;
 	//find the inverse matrix of molecule that we insert
-	XYZ backBone = newMol.GetCoords().Difference(0, atomNumber - 1);
+	XYZ backBone;
+	if(atomNumber != 1)
+	{
+	  backBone = newMol.GetCoords().Difference(0, atomNumber - 1);
+	}
+	else
+	{
+	  backBone = prng.RandomUnitVect();
+	}
 	XYZArray T(3);
 	T.Set(0, backBone);
 	T.GramSchmidt();
@@ -273,6 +284,9 @@ namespace cbmc
       { 
         multiPosRotions[i] = XYZArray(totalTrials); 
       }
+
+      if(atomNumber == 1)
+	nLJTrials = 1;
 
       if(oldMol.SeedFix())
       {
