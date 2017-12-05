@@ -31,6 +31,8 @@ public:
   virtual void BuildIDNew(TrialMol& newMol, uint molIndex) = 0;
   virtual void BuildIDOld(TrialMol& oldMol, uint molIndex) = 0;
 
+  virtual void Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex) = 0;
+
   virtual ~CBMC() {}
 };
 

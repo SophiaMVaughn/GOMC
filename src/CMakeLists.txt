@@ -108,6 +108,7 @@ set(headers
    PRNGSetup.h
    PSFOutput.h
    Reader.h
+   Regrowth.h
    SeedReader.h
    Setup.h
    SimEventFrequency.h

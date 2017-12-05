@@ -65,6 +65,10 @@ class MoleculeKind
    void BuildIDOld(cbmc::TrialMol& oldMol, const uint molIndex)
    { builder->BuildIDOld(oldMol, molIndex); }
 
+   void Regrowth(cbmc::TrialMol& oldMol, cbmc::TrialMol& newMol,
+	      const uint molIndex)
+   { builder->Regrowth(oldMol, newMol, molIndex); }
+
    
    double PrintChargeInfo();
    SortedNonbond sortedNB, sortedNB_1_4, sortedNB_1_3, sortedEwaldNB;

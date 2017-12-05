@@ -76,6 +76,7 @@ ConfigSetup::ConfigSetup(void)
   sys.moves.rotate = DBL_MAX;
   sys.moves.intraSwap = DBL_MAX;
   sys.moves.intraIdExchange = DBL_MAX;
+  sys.moves.regrowth = DBL_MAX;
   out.state.settings.enable = true;
   out.restart.settings.enable = true;
   out.console.enable = true;
@@ -446,6 +447,12 @@ void ConfigSetup::Init(const char *fileName)
 	sys.exchangeVal.enable = true;
       }
     }
+    else if(line[0] == "RegrowthFreq")
+    {
+      sys.moves.regrowth = stringtod(line[1]);
+      printf("%-40s %-4.4f \n", "Info: Regrowth move frequency",
+             sys.moves.regrowth);
+    }
     else if(line[0] == "RotFreq")
     {
       sys.moves.rotate = stringtod(line[1]);
@@ -775,6 +782,13 @@ void ConfigSetup::fillDefaults(void)
 	     sys.moves.intraSwap);
   }
 
+  if(sys.moves.regrowth == DBL_MAX)
+  {
+    sys.moves.regrowth = 0.000;
+    printf("%-40s %-4.4f \n", "Default: Regrowth move frequency",
+	   sys.moves.intraSwap);
+  }
+
   if(sys.exclude.EXCLUDE_KIND == UINT_MAX)
   {
     sys.exclude.EXCLUDE_KIND = sys.exclude.EXC_ONEFOUR_KIND;
@@ -1054,7 +1068,7 @@ void ConfigSetup::verifyInputs(void)
   }
   if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.transfer +
 	 sys.moves.intraSwap + sys.moves.volume + sys.moves.idExchange +
-	 sys.moves.intraIdExchange - 1.0) > 0.01)
+	 sys.moves.intraIdExchange + sys.moves.regrowth - 1.0) > 0.01)
   {
     std::cout << "Error: Sum of move frequncies are not equal to one!\n";
     exit(0);
@@ -1066,7 +1080,8 @@ void ConfigSetup::verifyInputs(void)
     exit(0);
   }
   if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.intraSwap +
-	 sys.moves.volume + sys.moves.intraIdExchange - 1.0) > 0.01)
+	 sys.moves.volume + sys.moves.intraIdExchange + sys.moves.regrowth -
+	 1.0) > 0.01)
   {
     std::cout << "Error: Sum of move frequncies are not equal to one!\n";
     exit(0);
@@ -1079,15 +1094,15 @@ void ConfigSetup::verifyInputs(void)
     exit(0);
   }
   if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.intraSwap +
-	 sys.moves.transfer + sys.moves.idExchange + sys.moves.intraIdExchange
-	 - 1.0) > 0.01)
+	 sys.moves.transfer + sys.moves.idExchange + sys.moves.intraIdExchange+
+	 sys.moves.regrowth - 1.0) > 0.01)
   {
     std::cout << "Error: Sum of move frequncies are not equal to one!!\n";
     exit(0);
   }
 #else
   if(abs(sys.moves.displace + sys.moves.rotate + sys.moves.intraSwap+
-	 sys.moves.intraIdExchange -1.0) > 0.01)
+	 sys.moves.intraIdExchange + sys.moves.regrowth - 1.0) > 0.01)
   {
     std::cout << "Error: Sum of move frequncies are not equal to one!!\n";
     exit(0);

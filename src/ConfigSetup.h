@@ -141,7 +141,7 @@ namespace config_setup
    //Holds the percentage of each kind of move for this ensemble. 
    struct MovePercents 
    { 
-     double displace, rotate, intraSwap, intraIdExchange; 
+     double displace, rotate, intraSwap, intraIdExchange, regrowth; 
 #ifdef VARIABLE_VOLUME 
       double volume; 
 #endif 

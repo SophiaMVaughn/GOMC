@@ -117,6 +117,11 @@ void DCGraph::BuildIDOld(TrialMol& oldMol, uint molIndex)
   idExchange->BuildOld(oldMol, molIndex);
 }
 
+void DCGraph::Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
+{
+  Build(oldMol, newMol, molIndex);
+}
+
 DCGraph::~DCGraph()
 {
   for(uint v = 0; v < nodes.size(); ++v)

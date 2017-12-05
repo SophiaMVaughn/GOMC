@@ -120,6 +120,11 @@ void ConsoleOutput::PrintMove(const uint box, const ulong step) const
     printElement(var->GetAccepted(sub), elementWidth);
     printElement(var->GetAcceptPercent(sub), elementWidth);
 
+    sub = mv::GetMoveSubIndex(mv::REGROWTH, box);
+    printElement(var->GetTries(sub), elementWidth);
+    printElement(var->GetAccepted(sub), elementWidth);
+    printElement(var->GetAcceptPercent(sub), elementWidth);
+
 #if ENSEMBLE == GEMC || ENSEMBLE == GCMC
     sub = mv::GetMoveSubIndex(mv::ID_EXCHANGE, box);
     printElement(var->GetTries(sub), elementWidth);
@@ -173,7 +178,7 @@ void ConsoleOutput::PrintStatistic(const uint box, const ulong step) const
       uint kb = k+offset;
 
       if(var->numKinds > 1)
-	printElement(var->molFractionByKindBox[kb], elementWidth);
+	printElement(var->molFractionByKindBox[kb], elementWidth, 6);
     }
   }
 
@@ -309,6 +314,10 @@ void ConsoleOutput::PrintMoveTitle()
   printElement("INIDEXACCEPT", elementWidth);
   printElement("INIDEXACCEPT%", elementWidth);
 
+  printElement("REGROWTH", elementWidth);
+  printElement("REGROWACCEPT", elementWidth);
+  printElement("REGROWACCEPT%", elementWidth);
+
 #if ENSEMBLE == GEMC || ENSEMBLE == GCMC
   printElement("IDEXCHANGE", elementWidth);
   printElement("IDEXACCEPT", elementWidth);
@@ -329,13 +338,35 @@ void ConsoleOutput::PrintMoveTitle()
   std::cout << std::endl;
 }
 
-template <typename T>
-void ConsoleOutput::printElement( const T t, const int width) const
+void ConsoleOutput::printElement(const double t, const int width,
+				 uint percision) const
 {
   const char separator = ' ';
-  std::cout << right << std::fixed << std::setprecision(4) << setw(width) <<
+  if(abs(t) > 9999999999.9999)
+  {
+    std::cout << right << std::fixed << std::setprecision(0) <<
+      setw(width) << setfill(separator) << 9999999999;
+  }
+  else
+  {
+    std::cout << right << std::fixed << std::setprecision(percision) <<
+      setw(width) << setfill(separator) << t;
+  }
+
+}
+
+void ConsoleOutput::printElement(const uint t, const int width) const
+{
+  const char separator = ' ';
+  std::cout << right << std::fixed  << setw(width) <<
     setfill(separator) << t;
-  
+}
+
+void ConsoleOutput::printElement(const std::string t, const int width) const
+{
+  const char separator = ' ';
+  std::cout << right << std::fixed << setw(width) <<
+    setfill(separator) << t;
 }
 
 template <typename T>

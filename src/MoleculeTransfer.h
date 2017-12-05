@@ -156,9 +156,15 @@ inline void MoleculeTransfer::Accept(const uint rejectState, const uint step)
       double Wn = newMol.GetWeight();
       double Wrat = Wn / Wo * W_tc * W_recip;
 
-      result = prng() < molTransCoeff * Wrat;
+      if((newMol.GetEnergy().real < 1.0e15) &&
+	 (oldMol.GetEnergy().real < 1.0e15))
+      {
+	result = prng() < molTransCoeff * Wrat;
+      }
+      else
+	result = false;
 
-      if (result)
+      if(result)
       {
          //Add tail corrections
          sysPotRef.boxEnergy[sourceBox].tc += tcLose.energy;

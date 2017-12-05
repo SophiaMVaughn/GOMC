@@ -108,8 +108,16 @@ inline void IntraSwap::Accept(const uint rejectState, const uint step)
       double Wn = newMol.GetWeight();
       double Wrat = Wn / Wo * W_tc * W_recip;
 
-      result = prng() < molTransCoeff * Wrat;
-      if (result)
+      //safety to make sure move will be rejected in overlap case
+      if((newMol.GetEnergy().real < 1.0e15) &&
+	 (oldMol.GetEnergy().real < 1.0e15))
+      {
+	result = prng() < molTransCoeff * Wrat;
+      }
+      else
+	result = false;
+
+      if(result)
       {
          //Add rest of energy.
          sysPotRef.boxEnergy[sourceBox] -= oldMol.GetEnergy();

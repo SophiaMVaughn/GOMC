@@ -426,8 +426,7 @@ void CalculateEnergy::MoleculeInter(Intermolecular &inter_LJ,
 		 qi_qj_fact = particleCharge[atom] * particleCharge[nIndex[i]] *
 		   num::qqFact;
 
-		 tempREn -= forcefield.particles->CalcCoulombEn(distSq,
-								qi_qj_fact);
+		 tempREn -=forcefield.particles->CalcCoulomb(distSq,qi_qj_fact);
 	       }
 		 
 	       tempLJEn -=forcefield.particles->CalcEn(distSq,

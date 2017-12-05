@@ -75,3 +75,42 @@ void DCLinear::BuildIDOld(TrialMol& oldMol, uint molIndex)
   idExchange->PrepareOld(oldMol, molIndex);
   idExchange->BuildOld(oldMol, molIndex);
 }
+
+void DCLinear::Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
+{
+  bool forw = data.prng.randInt(1);
+  uint start = data.prng.randInt(forward.size() - 3) + 1;
+  if(forward.size() < 3)
+  {
+    return Build(oldMol, newMol, molIndex);
+  }
+
+  if(forw)
+  {
+    for(uint i = 0; i <= start; ++i)
+    {
+      newMol.AddAtom(i, oldMol.GetCoords().Get(i)); 
+    }
+    for(uint i = start + 1; i < forward.size(); ++i)
+    {
+      forward[i]->PrepareNew(newMol, molIndex);
+      forward[i]->BuildNew(newMol, molIndex);
+      forward[i]->PrepareOld(oldMol, molIndex);
+      forward[i]->BuildOld(oldMol, molIndex);
+    }
+  }
+  else
+  {
+    for(uint i = start; i < backward.size(); ++i)
+    {
+      newMol.AddAtom(i, oldMol.GetCoords().Get(i)); 
+    }
+    for(uint i = backward.size() - start; i < backward.size(); ++i)
+    {
+      backward[i]->PrepareNew(newMol, molIndex);
+      backward[i]->BuildNew(newMol, molIndex);
+      backward[i]->PrepareOld(oldMol, molIndex);
+      backward[i]->BuildOld(oldMol, molIndex);
+    }
+  }
+}

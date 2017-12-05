@@ -31,6 +31,7 @@ namespace cbmc
       void Build(TrialMol& oldMol, TrialMol& newMol, uint molIndex);
       void BuildIDNew(TrialMol& newMol, uint molIndex);
       void BuildIDOld(TrialMol& oldMol, uint molIndex);
+      void Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex);
       ~DCGraph();
 
    private:
