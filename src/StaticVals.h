@@ -48,6 +48,7 @@ class StaticVals
 #endif
    bool IsEquil(const uint step) { return step >= simEventFreq.tillEquil; }
    bool DoAdjust(const uint move) { return move%simEventFreq.perAdjust == 0; }
+   uint GetPerAdjust() const { return simEventFreq.perAdjust; }
    double AcceptPercent(const uint tempAccept)
    { return (double)(tempAccept)/(double)(simEventFreq.perAdjust); }
 

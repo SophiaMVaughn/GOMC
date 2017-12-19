@@ -19,62 +19,83 @@ class IdentityExchange : public MoveBase
  public:
 
    IdentityExchange(System &sys, StaticVals const& statV) :
-    ffRef(statV.forcefield), molLookRef(sys.molLookupRef),
-      MoveBase(sys, statV), rmax(statV.mol.kinds[0].cavDim), cavA(3), 
-      invCavA(3)
-      {
-	enableID = ffRef.enableID;
-	if(rmax.x >= rmax.y)
-	  rmax.y = rmax.x;
-	else
-	  rmax.x = rmax.y;
+   ffRef(statV.forcefield), molLookRef(sys.molLookupRef), MoveBase(sys, statV),
+   rmax(statV.mol.kinds[0].cavDim), cavA(3), invCavA(3),
+   perAdjust(statV.GetPerAdjust())
+   {
+     enableID = ffRef.enableID;
+     if(rmax.x >= rmax.y)
+       rmax.y = rmax.x;
+     else
+       rmax.x = rmax.y;
 
-	volCav = rmax.x * rmax.y * rmax.z;
+     volCav = rmax.x * rmax.y * rmax.z;
 
-	if(enableID)
-	{
-	  uint kindSnum = 0;
-	  uint kindLnum = 0;
-	  uint max = 0;
-	  for(uint k = 0; k < molLookRef.GetNumKind(); k++)
-	  {
-	    if(molRef.kinds[k].exchangeRatio != 0)
-	    {
-	      if(molRef.kinds[k].exchangeRatio > max)
-	      {
-		if(max == 0)
-		{
-		  max = molRef.kinds[k].exchangeRatio;
-		  kindS = k;
-		  kindSnum = molRef.kinds[k].exchangeRatio;
-		}
-		else
-		{
-		  kindL = kindS;
-		  kindLnum = kindSnum;
-		  kindS = k;
-		  kindSnum = molRef.kinds[k].exchangeRatio;
-		}
-	      }
-	      else
-	      {
-		kindL = k;
-		kindLnum = molRef.kinds[k].exchangeRatio;
-	      }
-	    }
-	  }
+     if(enableID)
+     {
+       uint kindSnum = 0;
+       uint kindLnum = 0;
+       uint max = 0;
+       for(uint k = 0; k < molLookRef.GetNumKind(); k++)
+       {
+	 if(molRef.kinds[k].exchangeRatio != 0)
+	 {
+	   if(molRef.kinds[k].exchangeRatio > max)
+	   {
+	     if(max == 0)
+	     {
+	       max = molRef.kinds[k].exchangeRatio;
+	       kindS = k;
+	       kindSnum = molRef.kinds[k].exchangeRatio;
+	     }
+	     else
+	     {
+	       kindL = kindS;
+	       kindLnum = kindSnum;
+	       kindS = k;
+	       kindSnum = molRef.kinds[k].exchangeRatio;
+	     }
+	   }
+	   else
+	   {
+	     kindL = k;
+	     kindLnum = molRef.kinds[k].exchangeRatio;
+	   }
+	 }
+       }
 
-	  if(kindLnum != 0 && kindSnum != 0)
-	  { 
-	    exchangeRate = kindSnum / kindLnum;
-	  }
-	  else
-	  {
-	    printf("Error: Identity Exchange move is valid for exchanging one large molecule with N small molecules. Exchange Ratio of one kind must set to 1.\n");
-	    exit(EXIT_FAILURE);
-	  }
-	}
-      }
+       if(kindLnum != 0 && kindSnum != 0)
+       { 
+	 if((kindLnum == 1) && (kindSnum == 1))
+	 {
+	   if(molRef.kinds[kindS].NumAtoms() > molRef.kinds[kindL].NumAtoms())
+	   {
+	     std::swap(kindS, kindL);
+	   }
+	 }
+	 exchangeRate = kindSnum / kindLnum;
+       }
+       else
+       {
+	 printf("Error: Identity Exchange move is valid for exchanging one large molecule with N small molecules. Exchange Ratio of one kind must set to 1.\n");
+	 exit(EXIT_FAILURE);
+       }
+     }
+
+     //checking the acceptance statistic for each kind
+     counter = 0;
+     molInCavCount = 0;
+     lastAccept = 0.0;
+     exDiff = 1;
+     trial.resize(BOXES_WITH_U_NB);
+     accept.resize(BOXES_WITH_U_NB);
+     for(uint b = 0; b < BOXES_WITH_U_NB; b++)
+     {
+       trial[b].resize(sys.molLookupRef.GetNumKind(), 0);
+       accept[b].resize(sys.molLookupRef.GetNumKind(), 0);	    
+     }
+     //
+   }
 
    virtual uint Prep(const double subDraw, const double movPerc);
    virtual uint Transform();
@@ -83,6 +104,8 @@ class IdentityExchange : public MoveBase
 
  private:
 
+   void AdjustExRatio();
+   void PrintAcceptance(const uint step);
    void ShiftMol(const bool A, const uint n, const uint from, const uint to);
    void RecoverMol(const bool A, const uint n, const uint from, const uint to);
    uint PickMolInCav();
@@ -94,26 +117,82 @@ class IdentityExchange : public MoveBase
    //calculate ratio of factorial
    double Factorial(const uint n, const uint count) const;
    uint GetBoxPairAndMol(const double subDraw, const double movPerc);
+
    MolPick molPick;
    uint sourceBox, destBox;
-   vector<uint> pStartA, pLenA, pStartB, pLenB;
-   vector<uint> molIndexA, kindIndexA, molIndexB, kindIndexB;
+   uint perAdjust, molInCavCount, counter;
    bool insertB, enableID;
    uint numInCavA, numInCavB, exchangeRate, kindS, kindL;
+   vector<uint> pStartA, pLenA, pStartB, pLenB;
+   vector<uint> molIndexA, kindIndexA, molIndexB, kindIndexB;
+   vector< vector<uint> > molInCav;
+   vector<cbmc::TrialMol> oldMolA, newMolA, oldMolB, newMolB;
+   //check acceptance
+   vector< vector<uint> > trial, accept;
 
-   double volCav;
+   int exDiff;
+   double volCav, lastAccept;
    XYZ center, rmax;
    XYZArray cavA, invCavA;
    double W_tc, W_recip;
    double correct_oldA, correct_newA, self_oldA, self_newA;
    double correct_oldB, correct_newB, self_oldB, self_newB;
    double recipDest, recipSource;
-   vector<cbmc::TrialMol> oldMolA, newMolA, oldMolB, newMolB;
    Intermolecular tcNew[BOX_TOTAL];
-   vector< vector<uint> > molInCav;
    MoleculeLookup & molLookRef;
    Forcefield const& ffRef;
 };
+
+inline void IdentityExchange::AdjustExRatio()
+{
+  if(((counter + 1) % perAdjust) == 0)
+  {
+    uint exMax = ceil((float)molInCavCount / (float)perAdjust);
+    uint exMin = ceil((float)exMax / 2.0);
+    subPick = mv::GetMoveSubIndex(mv::ID_EXCHANGE, sourceBox);
+    double currAccept = moveSetRef.GetAccept(subPick);
+    if(abs(currAccept - lastAccept) > 0.05 * currAccept)
+    {
+      if(currAccept > lastAccept)
+      {
+	exchangeRate += exDiff;
+      }
+      else
+      {
+	exDiff *= -1;
+	exchangeRate += exDiff;
+      }
+      lastAccept = currAccept;
+      if(exchangeRate < exMin)
+	exchangeRate = exMin;
+      if(exchangeRate > exMax)
+	exchangeRate = exMax;
+    }
+    molInCavCount = 0;
+    counter = 0;
+  }
+}
+
+inline void IdentityExchange::PrintAcceptance(const uint step)
+{
+  subPick = mv::GetMoveSubIndex(mv::ID_EXCHANGE, sourceBox);
+  uint t = moveSetRef.GetTrial(subPick);
+  if((t + 1) % (10 * perAdjust) == 0)
+  {
+    for(uint b = 0; b < BOXES_WITH_U_NB; b++)
+    {
+      for(uint k = 0; k < molLookRef.GetNumKind(); k++)
+      {
+	if(trial[b][k] != 0)
+	{
+	  printf("IDInsertion acceptance for kind %d in Box %d: %1.5f \n",
+		 k, b, ((double)accept[b][k] / trial[b][k]) * 100);
+	}
+      }
+    }
+    printf("Exchange ratio: %d\n", exchangeRate);
+  }
+}
 
 inline uint IdentityExchange::PickMolInCav()
 {
@@ -163,6 +242,9 @@ inline uint IdentityExchange::PickMolInCav()
      state = mv::fail_state::NO_MOL_OF_KIND_IN_BOX;
    }
 
+   molInCavCount += molInCav[kindS].size();
+   counter++;
+
    return state;
 }
 
@@ -204,8 +286,7 @@ inline uint IdentityExchange::ReplaceMolecule()
      calcEnRef.FindMolInCavity(molInCav, center, rmax, invCavA, sourceBox,
 			       kindS, exchangeRate);
      //pick exchangeRate number of Small molecule from dest box
-     state = prng.PickMol(kindL, kindIndexB, molIndexB, numInCavB, destBox);
-     
+     state = prng.PickMol(kindL, kindIndexB, molIndexB, numInCavB, destBox);  
    }
    return state;
 }
@@ -248,13 +329,18 @@ inline uint IdentityExchange::GetBoxPairAndMol
    destBox = 1;
 #endif
 
+   //adjust exchange rate based on number of small kind in cavity
+   AdjustExRatio();
+
    if(insertB)
    {
      state = PickMolInCav();
+     trial[sourceBox][kindL]++;
    }
    else
    {
      state = ReplaceMolecule();
+     trial[sourceBox][kindS]++;
    }  
    
    if(state == mv::fail_state::NO_FAIL)
@@ -614,6 +700,7 @@ inline void IdentityExchange::RecoverMol(const bool A, const uint n,
   }
 }
 
+//return n!
 inline double IdentityExchange::Factorial(const uint n) const
 {
   double result = 1.0;
@@ -625,6 +712,7 @@ inline double IdentityExchange::Factorial(const uint n) const
   return result;
 }
 
+//return (n+count)!/n! 
 inline double IdentityExchange::Factorial(const uint n, const uint count) const
 {
   double result = 1.0;
@@ -638,7 +726,10 @@ inline double IdentityExchange::Factorial(const uint n, const uint count) const
 
 inline void IdentityExchange::Accept(const uint rejectState, const uint step)
 {
-   bool result;
+   bool result; 
+   //print acceptance information
+   PrintAcceptance(step);
+
    //If we didn't skip the move calculation
    if(rejectState == mv::fail_state::NO_FAIL)
    {
@@ -659,6 +750,8 @@ inline void IdentityExchange::Accept(const uint rejectState, const uint step)
 
       if(result)
       {
+	 //update acceptance
+	 accept[sourceBox][kindIndexB[0]]++;
          //Add tail corrections
          sysPotRef.boxEnergy[sourceBox].tc = tcNew[sourceBox].energy;
          sysPotRef.boxEnergy[destBox].tc = tcNew[destBox].energy;

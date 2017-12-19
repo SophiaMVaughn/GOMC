@@ -13,8 +13,19 @@ class MoleculeTransfer : public MoveBase
  public:
 
    MoleculeTransfer(System &sys, StaticVals const& statV) : 
-      ffRef(statV.forcefield), molLookRef(sys.molLookupRef), 
-	MoveBase(sys, statV) {}
+   ffRef(statV.forcefield), molLookRef(sys.molLookupRef), 
+   MoveBase(sys, statV), perAdjust(statV.GetPerAdjust()) 
+   {
+     //checking the acceptance statistic for each kind
+     trial.resize(BOX_TOTAL);
+     accept.resize(BOX_TOTAL);
+     for(uint b = 0; b < BOX_TOTAL; b++)
+     {
+       trial[b].resize(sys.molLookupRef.GetNumKind(), 0);
+       accept[b].resize(sys.molLookupRef.GetNumKind(), 0);	    
+     }
+     //
+   }
 
    virtual uint Prep(const double subDraw, const double movPerc);
    virtual uint Transform();
@@ -23,12 +34,16 @@ class MoleculeTransfer : public MoveBase
 
  private:
    
+   void PrintAcceptance(const uint step);
    double GetCoeff() const;
    uint GetBoxPairAndMol(const double subDraw, const double movPerc);
    MolPick molPick;
    uint sourceBox, destBox;
    uint pStart, pLen;
    uint molIndex, kindIndex;
+   uint perAdjust;
+   //check acceptance
+   vector< vector<uint> > trial, accept;
 
    double W_tc, W_recip;
    double correct_old, correct_new, self_old, self_new;
@@ -38,18 +53,44 @@ class MoleculeTransfer : public MoveBase
    Forcefield const& ffRef;
 };
 
-inline uint MoleculeTransfer::GetBoxPairAndMol
-(const double subDraw, const double movPerc)
+inline void MoleculeTransfer::PrintAcceptance(const uint step)
+{
+  uint t = 0;
+  for(uint b = 0; b < BOX_TOTAL; b++)
+  {
+    subPick = mv::GetMoveSubIndex(mv::MOL_TRANSFER, b);
+    t += moveSetRef.GetTrial(subPick);
+  }
+
+  if((t + 1) % (10 * perAdjust) == 0)
+  {
+    for(uint b = 0; b < BOXES_WITH_U_NB; b++)
+    {
+      for(uint k = 0; k < molLookRef.GetNumKind(); k++)
+      {
+	if(trial[b][k] != 0)
+	{
+	  printf("MolTransfer acceptance for kind %d in Box %d: %1.5f \n",
+		 k, b, ((double)accept[b][k] / trial[b][k]) * 100);
+	}
+      }
+    }
+  }
+}
+
+inline uint MoleculeTransfer::GetBoxPairAndMol(const double subDraw,
+					       const double movPerc)
 {
    // Need to call a function to pick a molecule that is not fixed but cannot be
    // swap between boxes. (beta != 1, beta !=2)
    uint state = prng.PickMolAndBoxPair2(molIndex, kindIndex, sourceBox, destBox,
-				       subDraw, movPerc);
- 
+					subDraw, movPerc);   
+
    if (state != mv::fail_state::NO_MOL_OF_KIND_IN_BOX)
    {
       pStart = pLen = 0;
       molRef.GetRangeStartLength(pStart, pLen, molIndex);
+      trial[destBox][kindIndex]++;
    }
    return state;
 }
@@ -147,7 +188,10 @@ inline double MoleculeTransfer::GetCoeff() const
 
 inline void MoleculeTransfer::Accept(const uint rejectState, const uint step)
 {
-   bool result;
+   bool result;   
+   //print acceptance information
+   PrintAcceptance(step);
+
    //If we didn't skip the move calculation
    if(rejectState == mv::fail_state::NO_FAIL)
    {
@@ -166,6 +210,8 @@ inline void MoleculeTransfer::Accept(const uint rejectState, const uint step)
 
       if(result)
       {
+	 //update acceptance
+	 accept[destBox][kindIndex]++;
          //Add tail corrections
          sysPotRef.boxEnergy[sourceBox].tc += tcLose.energy;
          sysPotRef.boxEnergy[destBox].tc += tcGain.energy;

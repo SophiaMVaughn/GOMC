@@ -254,7 +254,7 @@ namespace cbmc
 	  } 
 	}
       } 
- 
+
       for (uint a = 0; a < atomNumber; ++a) 
       { 
          data->axes.WrapPBC(multiPosRotions[a], newMol.GetBox());  
