@@ -35,24 +35,34 @@ namespace cbmc
       ~DCGraph();
 
    private:
+      //Store edge's atom that are connected to node and has more than 1 bond
+      //Each edge is a node as well
       struct Edge
       {
-         uint destination;
-         DCComponent* component;
-         Edge(uint d, DCComponent* c) : destination(d), component(c) {}
+	//destination is partner of the atom.
+	uint destination;
+	DCComponent* component;
+        Edge(uint d, DCComponent* c) : destination(d), component(c) {}
       };
+      
+      //Store the branching atom and all Atoms that are connected to this
+      //branching atom
       struct Node
       {
+	//starting will be initialized with DCFreeHedron
 	DCComponent *starting;
-         std::vector<Edge> edges;
+	//all the atom that are connected to this node and has more than 1 bond
+	//will be in edges and initialized with DCLinkedHedron
+	std::vector<Edge> edges;
       };
       
       DCComponent *idExchange;
 
       DCData data;
+      //Branching atoms, C in CH4
       std::vector<Node> nodes;
       std::vector<Edge> fringe;
-      std::vector<bool> visited; //yes, I know
+      std::vector<bool> visited;
    };
 }
 
