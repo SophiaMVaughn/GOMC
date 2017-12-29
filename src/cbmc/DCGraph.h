@@ -29,6 +29,8 @@ namespace cbmc
          const MoleculeKind& kind, const Setup& set);
 
       void Build(TrialMol& oldMol, TrialMol& newMol, uint molIndex);
+      void BuildEdges(TrialMol& oldMol, TrialMol& newMol, uint molIndex,
+		      const uint current);
       void BuildIDNew(TrialMol& newMol, uint molIndex);
       void BuildIDOld(TrialMol& oldMol, uint molIndex);
       void Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex);
@@ -39,7 +41,7 @@ namespace cbmc
       //Each edge is a node as well
       struct Edge
       {
-	//destination is partner of the atom.
+	//destination is partner node index.
 	uint destination;
 	DCComponent* component;
         Edge(uint d, DCComponent* c) : destination(d), component(c) {}
@@ -49,11 +51,15 @@ namespace cbmc
       //branching atom
       struct Node
       {
-	//starting will be initialized with DCFreeHedron
+	uint atomIndex;
+	//starting will be initialized with DCFreeHedron using random loc
 	DCComponent *starting;
+	//starting will be initialized with DCFreeHedronSeed, using specify seed
+	DCComponent *restarting;
 	//all the atom that are connected to this node and has more than 1 bond
 	//will be in edges and initialized with DCLinkedHedron
 	std::vector<Edge> edges;
+	std::vector<uint> partnerIndex;
       };
       
       DCComponent *idExchange;

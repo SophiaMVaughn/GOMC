@@ -39,11 +39,10 @@ set(sources
    System.cpp
    cbmc/DCGraph.cpp
    cbmc/DCFreeHedron.cpp
+   cbmc/DCFreeHedronSeed.cpp
    cbmc/DCLinkedHedron.cpp
    cbmc/DCHedron.cpp
    cbmc/DCLinear.cpp
-   cbmc/DCLink.cpp
-   cbmc/DCLinkNoDih.cpp
    cbmc/DCOnSphere.cpp
    cbmc/DCSingle.cpp
    cbmc/DCRotateCOM.cpp
@@ -122,12 +121,11 @@ set(headers
    cbmc/DCComponent.h
    cbmc/DCData.h
    cbmc/DCFreeHedron.h
+   cbmc/DCFreeHedronSeed.h
    cbmc/DCLinkedHedron.h
    cbmc/DCGraph.h
    cbmc/DCHedron.h
    cbmc/DCLinear.h
-   cbmc/DCLink.h
-   cbmc/DCLinkNoDih.h
    cbmc/DCOnSphere.h
    cbmc/DCSingle.h
    cbmc/DCRotateCOM.h

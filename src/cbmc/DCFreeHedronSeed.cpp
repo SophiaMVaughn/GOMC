@@ -1,6 +1,6 @@
 #define _USE_MATH_DEFINES 
 #include <math.h> 
-#include "DCFreeHedron.h" 
+#include "DCFreeHedronSeed.h" 
 #include "DCData.h" 
 #include "TrialMol.h" 
 #include "MolSetup.h" 
@@ -11,9 +11,10 @@
 namespace cbmc 
 { 
  
-   DCFreeHedron::DCFreeHedron(DCData* data, const mol_setup::MolKind& kind,  
-			      uint focus, uint prev) 
-      : data(data), seed(data, focus), hed(data, kind, focus, prev) 
+   DCFreeHedronSeed::DCFreeHedronSeed(DCData* data,
+				      const mol_setup::MolKind& kind,
+				      uint focus, uint prev) 
+      : data(data), hed(data, kind, focus, prev) 
    { 
          using namespace mol_setup; 
          using namespace std; 
@@ -28,12 +29,12 @@ namespace cbmc
    } 
  
  
-   void DCFreeHedron::PrepareNew(TrialMol& newMol, uint molIndex) 
+   void DCFreeHedronSeed::PrepareNew(TrialMol& newMol, uint molIndex) 
    { 
       hed.PrepareNew(newMol, molIndex); 
    } 
  
-   void DCFreeHedron::PrepareOld(TrialMol& oldMol, uint molIndex) 
+   void DCFreeHedronSeed::PrepareOld(TrialMol& oldMol, uint molIndex) 
    { 
       hed.PrepareOld(oldMol, molIndex); 
       double bondLengthOld = sqrt(oldMol.OldDistSq(hed.Focus(), hed.Prev())); 
@@ -41,9 +42,8 @@ namespace cbmc
    } 
  
  
-   void DCFreeHedron::BuildNew(TrialMol& newMol, uint molIndex) 
+   void DCFreeHedronSeed::BuildNew(TrialMol& newMol, uint molIndex) 
    { 
-      seed.BuildNew(newMol, molIndex); 
       PRNG& prng = data->prng; 
       const CalculateEnergy& calc = data->calc; 
       const EwaldCached *calcEwald = data->calcEwald; 
@@ -117,9 +117,8 @@ namespace cbmc
       newMol.MultWeight(stepWeight); 
    } 
  
-   void DCFreeHedron::BuildOld(TrialMol& oldMol, uint molIndex) 
+   void DCFreeHedronSeed::BuildOld(TrialMol& oldMol, uint molIndex) 
    { 
-      seed.BuildOld(oldMol, molIndex); 
       PRNG& prng = data->prng; 
       const CalculateEnergy& calc = data->calc; 
       const EwaldCached * calcEwald = data->calcEwald; 

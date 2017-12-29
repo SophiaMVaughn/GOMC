@@ -11,6 +11,7 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 #include "XYZArray.h"
 #include "TransformMatrix.h"
 #include "BasicTypes.h"
+#include "MoleculeKind.h"
 
 class MoleculeKind;
 class BoxDimensions;
@@ -91,13 +92,11 @@ class TrialMol
       //!calculate distance between atoms belong to specified angle
       double AngleDist(const double b1, const double b2, const double theta);
 
-      //!calculate distance between atoms belong to specified dihedral
-      double DihedDist(const double b1, const double b2, const double b3,
-		       const double theta1, const double theta2,
-		       const double phi);
-
       //!calculate distance between two atom in oldMol
       double OldDistSq(const uint atom, const uint lastAtom);
+
+      //calculate min image distance between a and b
+      double DistSq(const XYZ& a, const XYZ& b);
 
       const Energy& GetEnergy() const { return en; }
       double GetWeight() const { return totalWeight; }
@@ -107,6 +106,7 @@ class TrialMol
       uint GetBox() const { return box; }
       const BoxDimensions& GetAxes() const { return *axes; }
       const MoleculeKind& GetKind() const { return *kind; }
+      const bool OneFour() { return kind->oneFour;}
 
       //!Returns reference to coordinates of TrialMol.
       const XYZArray& GetCoords() const { return tCoords; }

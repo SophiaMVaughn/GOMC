@@ -293,9 +293,9 @@ namespace cbmc
    }
 
 
-      void DCHedron::ConstrainedAngles(TrialMol& newMol, uint molIndex,
-				       uint nTrials)
-   {
+  void DCHedron::ConstrainedAngles(TrialMol& newMol, uint molIndex,
+				   uint nTrials)
+  {
       double* angles = data->angles;
       double* energies = data->angleEnergy;
       double* weights = data->angleWeights;

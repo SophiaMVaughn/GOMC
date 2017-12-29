@@ -3,7 +3,6 @@
 #include "BasicTypes.h"
 #include "GeomLib.h"   //for Theta
 #include "EnergyTypes.h"
-#include "MoleculeKind.h"
 #include "XYZArray.h"
 #include "BoxDimensions.h"
 
@@ -145,6 +144,14 @@ double TrialMol::OldDistSq(const uint lastAtom, const uint atom)
   return distSq;
 }
 
+double TrialMol::DistSq(const XYZ& a, const XYZ& b)
+{
+  XYZ diff = a - b;
+  diff = axes->MinImage(diff, box);
+  double distSq= diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+  return distSq;
+}
+
 //!Return angle in radians between confirmed atoms a, b and c:w
 double TrialMol::GetTheta(uint a, uint b, uint c) const
 {
@@ -280,20 +287,5 @@ double TrialMol::AngleDist(const double b1, const double b2, const double theta)
 
 }
 
-double TrialMol::DihedDist(const double b1, const double b2, const double b3,
-                           const double theta1, const double theta2,
-                           const double phi)
-{
-  if(!kind->oneFour)
-    return 0.0;
-  else
-  {
-    double i = b1 * cos(theta1) -b2 + b3 * cos(theta2);
-    double j = b3 * sin(theta2) * sin(phi);
-    double k = -b1 * sin(theta1) + b3 * sin(theta2) * cos(phi);
-    return (i*i + j*j + k*k);
-  }
-
-}
 
 }
