@@ -199,11 +199,26 @@ void DCGraph::Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
       uint pickFixEdg = data.prng.randIntExc(fringe.size());
       //Travel to picked edges and make it as new fixNode
       uint fixNode = fringe[pickFixEdg].destination;
+      visited[fixNode] = true;
+      //Copy the all atoms bonded to fixNode's focus                          
+      for(uint b = 0; b < nodes[fixNode].partnerIndex.size(); b++)
+      {
+	uint partner = nodes[fixNode].partnerIndex[b];
+	newMol.AddAtom(partner, oldMol.AtomPosition(partner));
+	oldMol.ConfirmOldAtom(partner);
+      }
       //Copy the edges of the new node to fringe
       fringe = nodes[fixNode].edges;
+      //remove the edge that we travelled from 
+      for( uint f = 0; f < fringe.size(); f++)
+      {
+	if(fringe[f].destination == current)
+	  fringe.erase(fringe.begin() + f);
+      }
       //Continue along picked edges and copy the coordinates
       while(!fringe.empty())
       {
+	fixNode = fringe[0].destination;
 	//Copy the all atoms bonded to fixNode's focus
 	for(uint b = 0; b < nodes[fixNode].partnerIndex.size(); b++)
 	{
@@ -212,7 +227,6 @@ void DCGraph::Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
 	  oldMol.ConfirmOldAtom(partner);
 	}
 	//Travel to new fixNode, remove traversed edge
-	fixNode = fringe[0].destination;
 	fringe[0] = fringe.back();
 	fringe.pop_back();
 	visited[fixNode] = true;
