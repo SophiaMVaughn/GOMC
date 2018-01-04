@@ -210,7 +210,7 @@ void DCGraph::Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
       //Copy the edges of the new node to fringe
       fringe = nodes[fixNode].edges;
       //remove the edge that we travelled from 
-      for( uint f = 0; f < fringe.size(); f++)
+      for(uint f = 0; f < fringe.size(); f++)
       {
 	if(fringe[f].destination == current)
 	  fringe.erase(fringe.begin() + f);

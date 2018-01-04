@@ -122,7 +122,7 @@ class IdentityExchange : public MoveBase
    uint sourceBox, destBox;
    uint perAdjust, molInCavCount, counter;
    bool insertB, enableID;
-   uint numInCavA, numInCavB, exchangeRate, kindS, kindL;
+   uint numInCavA, numInCavB, exchangeRate, kindS, kindL, totMolInCav;
    vector<uint> pStartA, pLenA, pStartB, pLenB;
    vector<uint> molIndexA, kindIndexA, molIndexB, kindIndexB;
    vector< vector<uint> > molInCav;
@@ -148,7 +148,7 @@ inline void IdentityExchange::AdjustExRatio()
   if(((counter + 1) % perAdjust) == 0)
   {
     uint exMax = ceil((float)molInCavCount / (float)perAdjust);
-    uint exMin = ceil((float)exMax / 2.0);
+    uint exMin = 1;
     subPick = mv::GetMoveSubIndex(mv::ID_EXCHANGE, sourceBox);
     double currAccept = moveSetRef.GetAccept(subPick);
     if(abs(currAccept - lastAccept) > 0.05 * currAccept)
@@ -197,53 +197,59 @@ inline void IdentityExchange::PrintAcceptance(const uint step)
 inline uint IdentityExchange::PickMolInCav()
 {
    uint state = mv::fail_state::NO_FAIL;
-   //pick a random location in dense phase
-   XYZ axis = boxDimRef.GetAxis(sourceBox);
-   XYZ temp(prng.randExc(axis.x), prng.randExc(axis.y), prng.randExc(axis.z));
-   //Use to shift the new insterted molecule
-   center = temp;
-   //Pick random vector anad find two vectors that are perpendicular to V1
-   cavA.Set(0, prng.RandomUnitVect());
-   cavA.GramSchmidt();
-   //Calculate inverse matrix for cav here Inv = transpose
-   cavA.TransposeMatrix(invCavA);
-
-   //Find the molecule kind 0 in the cavity
-   if(calcEnRef.FindMolInCavity(molInCav, center, rmax, invCavA,
-				sourceBox, kindS, exchangeRate))
+   //pick a random small kind in dense phase and use the COM as cavity center
+   uint pickedS, pickedKS;
+   state = prng.PickMol(kindL, pickedKS, pickedS, sourceBox);
+   if(state == mv::fail_state::NO_FAIL)
    {
-     molIndexA.clear();
-     kindIndexA.clear();
-     molIndexB.clear();
-     kindIndexB.clear();
-     //printf("MolS in cav: %d.\n", molInCav[kindS].size());
-     //Find the exchangeRate number of molecules kind 0 in cavity
-     numInCavA = exchangeRate;
-     for(uint n = 0; n < numInCavA; n++)
+     center = comCurrRef.Get(pickedS);
+     //Pick random vector anad find two vectors that are perpendicular to V1
+     cavA.Set(0, prng.RandomUnitVect());
+     cavA.GramSchmidt();
+     //Calculate inverse matrix for cav here Inv = transpose
+     cavA.TransposeMatrix(invCavA);
+
+     //Find the molecule kind 0 in the cavity
+     if(calcEnRef.FindMolInCavity(molInCav, center, rmax, invCavA, sourceBox,
+				  kindS, exchangeRate))
      {
-       //pick random exchangeRate number of kindS in cavity
-       uint mId = molInCav[kindS][prng.randIntExc(molInCav[kindS].size())];
-       while(std::find(molIndexA.begin(), molIndexA.end(), mId) !=
-	     molIndexA.end())
+       molIndexA.clear();
+       kindIndexA.clear();
+       molIndexB.clear();
+       kindIndexB.clear();
+       //Find the exchangeRate number of molecules kind 0 in cavity
+       numInCavA = exchangeRate;
+       //add the random picked small molecule to the list.
+       molIndexA.push_back(pickedS);
+       kindIndexA.push_back(pickedKS);
+       totMolInCav = molInCav[kindS].size();
+       for(uint s = 0; s < totMolInCav; s++)
        {
-	 mId = molInCav[kindS][prng.randIntExc(molInCav[kindS].size())];
+	 if(pickedS == molInCav[kindS][s])
+	   molInCav[kindS].erase(molInCav[kindS].begin() + s);
        }
-       molIndexA.push_back(mId);
-       kindIndexA.push_back(molRef.GetMolKind(molIndexA[n]));
-     } 
+       for(uint n = 1; n < numInCavA; n++)
+       {
+	 //pick random exchangeRate number of kindS in cavity
+	 uint picked = prng.randIntExc(molInCav[kindS].size());
+	 molIndexA.push_back(molInCav[kindS][picked]);
+	 kindIndexA.push_back(molRef.GetMolKind(molIndexA[n]));
+	 molInCav[kindS].erase(molInCav[kindS].begin() + picked);
+       } 
+       
+       //pick a molecule from Large kind in destBox
+       numInCavB = 1;
+       state = prng.PickMol(kindS, kindIndexB, molIndexB, numInCavB, destBox);
+     }
+     else
+     {
+       //reject the move
+       state = mv::fail_state::NO_MOL_OF_KIND_IN_BOX;
+     }
 
-     //pick a molecule from Large kind in destBox
-     numInCavB = 1;
-     state = prng.PickMol(kindS, kindIndexB, molIndexB, numInCavB, destBox);
+     molInCavCount += totMolInCav;
+     counter++;
    }
-   else
-   {
-     //reject the move
-     state = mv::fail_state::NO_MOL_OF_KIND_IN_BOX;
-   }
-
-   molInCavCount += molInCav[kindS].size();
-   counter++;
 
    return state;
 }
@@ -285,14 +291,15 @@ inline uint IdentityExchange::ReplaceMolecule()
      //find how many of KindS exist in this center
      calcEnRef.FindMolInCavity(molInCav, center, rmax, invCavA, sourceBox,
 			       kindS, exchangeRate);
+     totMolInCav = molInCav[kindS].size();
      //pick exchangeRate number of Small molecule from dest box
      state = prng.PickMol(kindL, kindIndexB, molIndexB, numInCavB, destBox);  
    }
    return state;
 }
 
-inline uint IdentityExchange::GetBoxPairAndMol
-(const double subDraw, const double movPerc)
+inline uint IdentityExchange::GetBoxPairAndMol(const double subDraw,
+					       const double movPerc)
 {
    uint state = mv::fail_state::NO_FAIL; 
    //deside to insert or remove the big molecule
@@ -427,17 +434,24 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
      {
        if(kindIndexB[0] == kindL)
        {
-	 //Inserting molB from destBox to the center of cavity in sourceBox
+	 //Inserting Lmol from destBox to the center of cavity in sourceBox
 	 newMolB[n].SetSeed(center, rmax, true, true);
-	 //perform rotational trial move in destBox for oldMolB
-	 //oldMolB[n].SetSeed(false, true);
+	 //perform rotational trial move in destBox for L oldMol
 	 oldMolB[n].SetSeed(false, false);
        }
        else
        {
-	 //Inserting molB from destBox to the cavity in sourceBox
-	 newMolB[n].SetSeed(center, rmax, true, false);
-	 //perform trial move in destBox for oldMolB
+	 if(n == 0)
+	 {
+	   //Inserting Smol from destBox to the center of cavity in sourceBox
+	   newMolB[n].SetSeed(center, rmax, true, true);
+	 }
+	 else
+	 {
+	   //Inserting S mol from destBox to the cavity in sourceBox
+	   newMolB[n].SetSeed(center, rmax, true, false);
+	 }
+	 //perform trial move in destBox for S oldMol
 	 oldMolB[n].SetSeed(false, false);
        }
      }
@@ -446,18 +460,25 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
      {
        if(kindIndexA[0] == kindL)
        {
-	 //Inserting molA from sourceBox to destBox
-	 //newMolA[n].SetSeed(false, true);
+	 //Inserting L mol from sourceBox to destBox
 	 newMolA[n].SetSeed(false, false);
-	 //perform rotational trial move on COM for oldMolA
+	 //perform rotational trial move on COM for L oldMol
 	 oldMolA[n].SetSeed(center, rmax, true, true);
        }
        else
        {
-	 //Inserting molA from sourceBox to destBox
+	 //Inserting S mol from sourceBox to destBox
 	 newMolA[n].SetSeed(false, false);
-	 //perform trial move in cavity in sourceBox for oldMolA
-	 oldMolA[n].SetSeed(center, rmax, true, false);
+	 if(n == 0)
+	 {
+	   //perform trial move in cavity with fix COM for S oldMol
+	   oldMolA[n].SetSeed(center, rmax, true, true);
+	 }
+	 else
+	 {
+	   //perform trial move in cavity in sourceBox for S oldMol
+	   oldMolA[n].SetSeed(center, rmax, true, false);
+	 }
        }
      }
    }
@@ -471,10 +492,22 @@ inline uint IdentityExchange::Transform()
   CalcTc();
 
   //Calc Old energy and delete A from source
-  for(uint n = 0; n < numInCavA; n++)
+  if(kindIndexA[0] == kindS)
   {
-    cellList.RemoveMol(molIndexA[n], sourceBox, coordCurrRef);
-    molRef.kinds[kindIndexA[n]].BuildIDOld(oldMolA[n], molIndexA[n]);
+    //Remove the fixed COM small mol at the end because we insert it at fist
+    for(uint n = numInCavA; n > 0; n--)
+    {
+      cellList.RemoveMol(molIndexA[n-1], sourceBox, coordCurrRef);
+      molRef.kinds[kindIndexA[n-1]].BuildIDOld(oldMolA[n-1], molIndexA[n-1]);
+    }
+  }
+  else
+  {
+    for(uint n = 0; n < numInCavA; n++)
+    {
+      cellList.RemoveMol(molIndexA[n], sourceBox, coordCurrRef);
+      molRef.kinds[kindIndexA[n]].BuildIDOld(oldMolA[n], molIndexA[n]);
+    }
   }
   
   //Calc old energy and delete B from destBox
@@ -581,7 +614,6 @@ inline double IdentityExchange::GetCoeff() const
   if(insertB)
   {
     //kindA is the small molecule
-    uint totMolInCav = molInCav[kindIndexA[0]].size();
     double ratioF =  Factorial(totMolInCav) /
       (Factorial(totMolInCav - exchangeRate) *
        Factorial(numTypeADest, exchangeRate));
@@ -593,7 +625,6 @@ inline double IdentityExchange::GetCoeff() const
   else
   {
     //kindA is the big molecule
-    uint totMolInCav = molInCav[kindIndexB[0]].size();
     double ratioF =  Factorial(totMolInCav) *
       Factorial(numTypeBDest - exchangeRate, exchangeRate) /
       Factorial(totMolInCav + exchangeRate);
@@ -609,23 +640,21 @@ inline double IdentityExchange::GetCoeff() const
     double insB = molRef.kinds[kindIndexB[0]].chemPot * numInCavB;
     if(insertB)
     {
-      //kindA is the small molecule
-      uint totMolInCav = molInCav[kindIndexA[0]].size();
-      double ratioF =  Factorial(totMolInCav) /
+      //Insert Large molecule
+      double ratioF =  Factorial(totMolInCav - 1) /
 	Factorial(totMolInCav - exchangeRate);
 
-      double ratioV = volSource / pow(volCav, exchangeRate);
-      return (insB / delA) * ratioF * ratioV / (numTypeBSource + 1.0);
+      double ratioM = numTypeASource / (numTypeBSource + 1.0);
+      return (insB / delA) * ratioF * ratioM / pow(volCav, exchangeRate - 1);
     }
     else
     {
-      //kindA is the big molecule
-      uint totMolInCav = molInCav[kindIndexB[0]].size();
+      //Delete Large Molecule
       double ratioF = Factorial(totMolInCav) /
-	Factorial(totMolInCav + exchangeRate);
+	Factorial(totMolInCav + exchangeRate - 1);
 
-      double ratioV = pow(volCav, exchangeRate) / volSource;
-      return (insB / delA) * ratioF * ratioV * numTypeASource;
+      double ratioM =  numTypeASource / (numTypeBSource + exchangeRate);
+      return (insB / delA) * ratioF * ratioM * pow(volCav, exchangeRate - 1);
     }
   }
   else
@@ -634,23 +663,21 @@ inline double IdentityExchange::GetCoeff() const
     double insB = (BETA * molRef.kinds[kindIndexB[0]].chemPot * numInCavB);
     if(insertB)
     {
-      //kindA is the small molecule
-      uint totMolInCav = molInCav[kindIndexA[0]].size();
-      double ratioF =  Factorial(totMolInCav) /
+      //Insert Large molecule
+      double ratioF =  Factorial(totMolInCav - 1) /
 	Factorial(totMolInCav - exchangeRate);
 
-      double ratioV = volSource / pow(volCav, exchangeRate);
-      return exp(delA + insB) * ratioF * ratioV / (numTypeBSource + 1.0);
+      double ratioM =  numTypeASource / (numTypeBSource + 1.0);
+      return exp(delA + insB) * ratioF * ratioM / pow(volCav, exchangeRate - 1);
     }
     else
     {
-      //kindA is the big molecule
-      uint totMolInCav = molInCav[kindIndexB[0]].size();
+      //Delete Large Molecule
       double ratioF = Factorial(totMolInCav) /
-	Factorial(totMolInCav + exchangeRate);
+	Factorial(totMolInCav + exchangeRate - 1);
 
-      double ratioV = pow(volCav, exchangeRate) / volSource;
-      return exp(delA + insB) * ratioF * ratioV * numTypeASource;
+      double ratioM = numTypeASource / (numTypeBSource + exchangeRate);
+      return exp(delA + insB) * ratioF * ratioM * pow(volCav, exchangeRate - 1);
     }
   }
 #endif
