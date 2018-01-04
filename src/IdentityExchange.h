@@ -203,7 +203,23 @@ inline uint IdentityExchange::PickMolInCav()
    if(state == mv::fail_state::NO_FAIL)
    {
      center = comCurrRef.Get(pickedS);
-     //Pick random vector anad find two vectors that are perpendicular to V1
+     /*
+     //If we want to orient the cavity with backbone of picked small mol
+     uint pStart = 0;
+     uint pLen = 0;
+     molRef.GetRangeStartLength(pStart, pLen, pickedS);
+     if(pLen == 1)
+     {
+       cavA.Set(0, prng.RandomUnitVect());
+     }
+     else
+     {
+       uint pEnd = pStart + pLen -1;
+       cavA.Set(0, boxDimRef.MinImage(coordCurrRef.Difference(pStart, pEnd),
+				      sourceBox));
+     }
+     */
+     //else Pick random vector and find two vectors that are perpendicular to V1
      cavA.Set(0, prng.RandomUnitVect());
      cavA.GramSchmidt();
      //Calculate inverse matrix for cav here Inv = transpose
