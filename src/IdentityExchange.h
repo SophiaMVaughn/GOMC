@@ -121,7 +121,7 @@ class IdentityExchange : public MoveBase
    MolPick molPick;
    uint sourceBox, destBox;
    uint perAdjust, molInCavCount, counter;
-   bool insertB, enableID;
+   bool insertL, enableID;
    uint numInCavA, numInCavB, exchangeRate, kindS, kindL, totMolInCav;
    vector<uint> pStartA, pLenA, pStartB, pLenB;
    vector<uint> molIndexA, kindIndexA, molIndexB, kindIndexB;
@@ -319,7 +319,7 @@ inline uint IdentityExchange::GetBoxPairAndMol(const double subDraw,
 {
    uint state = mv::fail_state::NO_FAIL; 
    //deside to insert or remove the big molecule
-   prng.PickBool(insertB, subDraw, movPerc);
+   prng.PickBool(insertL, subDraw, movPerc);
    
 #if ENSEMBLE == GEMC
    double density;
@@ -344,8 +344,8 @@ inline uint IdentityExchange::GetBoxPairAndMol(const double subDraw,
    //Pick box in dense phase
    sourceBox = densB; 
    //Pick the destination box
-   prng.SetOtherBox(destBox, sourceBox);
-   //prng.PickBoxPair(sourceBox, destBox, subDraw, movPerc);
+   //prng.SetOtherBox(destBox, sourceBox);
+   prng.PickBoxPair(sourceBox, destBox, subDraw, movPerc);
 
 #elif ENSEMBLE == GCMC
    sourceBox = 0;
@@ -355,7 +355,7 @@ inline uint IdentityExchange::GetBoxPairAndMol(const double subDraw,
    //adjust exchange rate based on number of small kind in cavity
    AdjustExRatio();
 
-   if(insertB)
+   if(insertL)
    {
      state = PickMolInCav();
      trial[sourceBox][kindL]++;
@@ -448,7 +448,7 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
 
      for(uint n = 0; n < numInCavB; n++)
      {
-       if(kindIndexB[0] == kindL)
+       if(insertL)
        {
 	 //Inserting Lmol from destBox to the center of cavity in sourceBox
 	 newMolB[n].SetSeed(center, rmax, true, true);
@@ -474,14 +474,7 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
 
      for(uint n = 0; n < numInCavA; n++)
      {
-       if(kindIndexA[0] == kindL)
-       {
-	 //Inserting L mol from sourceBox to destBox
-	 newMolA[n].SetSeed(false, false);
-	 //perform rotational trial move on COM for L oldMol
-	 oldMolA[n].SetSeed(center, rmax, true, true);
-       }
-       else
+       if(insertL)
        {
 	 //Inserting S mol from sourceBox to destBox
 	 newMolA[n].SetSeed(false, false);
@@ -496,6 +489,13 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
 	   oldMolA[n].SetSeed(center, rmax, true, false);
 	 }
        }
+       else
+       {
+	 //Inserting L mol from sourceBox to destBox
+	 newMolA[n].SetSeed(false, false);
+	 //perform rotational trial move on COM for L oldMol
+	 oldMolA[n].SetSeed(center, rmax, true, true);
+       }
      }
    }
 
@@ -508,7 +508,7 @@ inline uint IdentityExchange::Transform()
   CalcTc();
 
   //Calc Old energy and delete A from source
-  if(kindIndexA[0] == kindS)
+  if(insertL)
   {
     //Remove the fixed COM small mol at the end because we insert it at fist
     for(uint n = numInCavA; n > 0; n--)
@@ -627,39 +627,37 @@ inline double IdentityExchange::GetCoeff() const
   double volSource = boxDimRef.volume[sourceBox];
   double volDest = boxDimRef.volume[destBox];
 #if ENSEMBLE == GEMC
-  if(insertB)
+  if(insertL)
   {
     //kindA is the small molecule
-    double ratioF =  Factorial(totMolInCav) /
+    double ratioF =  Factorial(totMolInCav - 1) /
       (Factorial(totMolInCav - exchangeRate) *
        Factorial(numTypeADest, exchangeRate));
-
-    double ratioV = (volSource / volDest) * pow(volDest / volCav, exchangeRate);
-    
-    return ratioF * ratioV  * numTypeBDest / (numTypeBSource + 1.0);
+    double ratioV = pow(volDest / volCav, exchangeRate - 1);
+    double ratioM = numTypeASource * numTypeBDest / (numTypeBSource + 1.0);
+    return ratioF * ratioV * ratioM;
   }
   else
   {
     //kindA is the big molecule
     double ratioF =  Factorial(totMolInCav) *
       Factorial(numTypeBDest - exchangeRate, exchangeRate) /
-      Factorial(totMolInCav + exchangeRate);
-
-    double ratioV = (volDest / volSource) * pow(volCav / volDest, exchangeRate);
-
-    return ratioF * ratioV  * numTypeASource / (numTypeADest + 1.0);
+      Factorial(totMolInCav + exchangeRate - 1);
+    double ratioV = pow(volCav / volDest, exchangeRate - 1);
+    double ratioM = numTypeASource /
+      ((numTypeADest + 1.0) * (numTypeBSource + exchangeRate));
+    return ratioF * ratioV * ratioM;
   }
 #elif ENSEMBLE == GCMC
   if(ffRef.isFugacity)
   {
     double delA = molRef.kinds[kindIndexA[0]].chemPot * numInCavA;
     double insB = molRef.kinds[kindIndexB[0]].chemPot * numInCavB;
-    if(insertB)
+    if(insertL)
     {
       //Insert Large molecule
       double ratioF =  Factorial(totMolInCav - 1) /
 	Factorial(totMolInCav - exchangeRate);
-
       double ratioM = numTypeASource / (numTypeBSource + 1.0);
       return (insB / delA) * ratioF * ratioM / pow(volCav, exchangeRate - 1);
     }
@@ -668,7 +666,6 @@ inline double IdentityExchange::GetCoeff() const
       //Delete Large Molecule
       double ratioF = Factorial(totMolInCav) /
 	Factorial(totMolInCav + exchangeRate - 1);
-
       double ratioM =  numTypeASource / (numTypeBSource + exchangeRate);
       return (insB / delA) * ratioF * ratioM * pow(volCav, exchangeRate - 1);
     }
@@ -677,12 +674,11 @@ inline double IdentityExchange::GetCoeff() const
   {
     double delA = (-BETA * molRef.kinds[kindIndexA[0]].chemPot * numInCavA);
     double insB = (BETA * molRef.kinds[kindIndexB[0]].chemPot * numInCavB);
-    if(insertB)
+    if(insertL)
     {
       //Insert Large molecule
       double ratioF =  Factorial(totMolInCav - 1) /
 	Factorial(totMolInCav - exchangeRate);
-
       double ratioM =  numTypeASource / (numTypeBSource + 1.0);
       return exp(delA + insB) * ratioF * ratioM / pow(volCav, exchangeRate - 1);
     }
@@ -691,7 +687,6 @@ inline double IdentityExchange::GetCoeff() const
       //Delete Large Molecule
       double ratioF = Factorial(totMolInCav) /
 	Factorial(totMolInCav + exchangeRate - 1);
-
       double ratioM = numTypeASource / (numTypeBSource + exchangeRate);
       return exp(delA + insB) * ratioF * ratioM * pow(volCav, exchangeRate - 1);
     }
