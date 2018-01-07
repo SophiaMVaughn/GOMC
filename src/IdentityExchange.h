@@ -448,27 +448,28 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
 
      for(uint n = 0; n < numInCavB; n++)
      {
+       //SetSeed(has cavity, COM is fixed, rotate around Backbone)
        if(insertL)
        {
 	 //Inserting Lmol from destBox to the center of cavity in sourceBox
-	 newMolB[n].SetSeed(center, rmax, true, true);
+	 newMolB[n].SetSeed(center, rmax, true, true, true);
 	 //perform rotational trial move in destBox for L oldMol
-	 oldMolB[n].SetSeed(false, false);
+	 oldMolB[n].SetSeed(false, false, false);
        }
        else
        {
 	 if(n == 0)
 	 {
 	   //Inserting Smol from destBox to the center of cavity in sourceBox
-	   newMolB[n].SetSeed(center, rmax, true, true);
+	   newMolB[n].SetSeed(center, rmax, true, true, false);
 	 }
 	 else
 	 {
 	   //Inserting S mol from destBox to the cavity in sourceBox
-	   newMolB[n].SetSeed(center, rmax, true, false);
+	   newMolB[n].SetSeed(center, rmax, true, false, false);
 	 }
 	 //perform trial move in destBox for S oldMol
-	 oldMolB[n].SetSeed(false, false);
+	 oldMolB[n].SetSeed(false, false, false);
        }
      }
 
@@ -477,24 +478,24 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
        if(insertL)
        {
 	 //Inserting S mol from sourceBox to destBox
-	 newMolA[n].SetSeed(false, false);
+	 newMolA[n].SetSeed(false, false, false);
 	 if(n == 0)
 	 {
 	   //perform trial move in cavity with fix COM for S oldMol
-	   oldMolA[n].SetSeed(center, rmax, true, true);
+	   oldMolA[n].SetSeed(center, rmax, true, true, false);
 	 }
 	 else
 	 {
 	   //perform trial move in cavity in sourceBox for S oldMol
-	   oldMolA[n].SetSeed(center, rmax, true, false);
+	   oldMolA[n].SetSeed(center, rmax, true, false, false);
 	 }
        }
        else
        {
 	 //Inserting L mol from sourceBox to destBox
-	 newMolA[n].SetSeed(false, false);
+	 newMolA[n].SetSeed(false, false, false);
 	 //perform rotational trial move on COM for L oldMol
-	 oldMolA[n].SetSeed(center, rmax, true, true);
+	 oldMolA[n].SetSeed(center, rmax, true, true, true);
        }
      }
    }

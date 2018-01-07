@@ -25,6 +25,7 @@ TrialMol::TrialMol(const MoleculeKind& k, const BoxDimensions& ax,
   std::fill_n(atomBuilt, k.NumAtoms(), false);
   seedInCav = false;
   seedFix = false;
+  rotateBB = false;
   growthToWorld.LoadIdentity();
   cavMatrix.Set(0, 1.0, 0.0, 0.0);
   cavMatrix.Set(1, 0.0, 1.0, 0.0);
@@ -33,7 +34,7 @@ TrialMol::TrialMol(const MoleculeKind& k, const BoxDimensions& ax,
 
 TrialMol::TrialMol()
   : kind(NULL), axes(NULL), box(0), tCoords(0), atomBuilt(NULL),
-    seedInCav(false), seedFix(false), cavMatrix(3)
+    seedInCav(false), seedFix(false), rotateBB(false), cavMatrix(3)
 {
   cavMatrix.Set(0, 1.0, 0.0, 0.0);
   cavMatrix.Set(1, 0.0, 1.0, 0.0);
@@ -50,6 +51,7 @@ TrialMol::TrialMol(const TrialMol& other) :
   std::copy(other.atomBuilt, other.atomBuilt + kind->NumAtoms(), atomBuilt);
   seedInCav = false;
   seedFix = false;
+  rotateBB = false;
   cavMatrix.Set(0, 1.0, 0.0, 0.0);
   cavMatrix.Set(1, 0.0, 1.0, 0.0);
   cavMatrix.Set(2, 0.0, 0.0, 1.0);
@@ -77,6 +79,8 @@ void swap(TrialMol& a, TrialMol& b)
   b.seedInCav = false;
   a.seedFix = false;
   b.seedFix = false;
+  a.rotateBB = false;
+  b.rotateBB = false;
   a.cavMatrix.Set(0, 1.0, 0.0, 0.0);
   a.cavMatrix.Set(1, 0.0, 1.0, 0.0);
   a.cavMatrix.Set(2, 0.0, 0.0, 1.0);
@@ -244,18 +248,20 @@ void TrialMol::SetCavMatrix(const XYZArray& matrix)
 }
 
 void TrialMol::SetSeed(const XYZ& coords, const XYZ& rmax, const bool inCav,
-		       const bool fixCOM)
+		       const bool fixCOM, const bool rotBB)
 {
   sCoords = coords;
   sRmax = rmax;
   seedInCav = inCav;
   seedFix = fixCOM;
+  rotateBB = rotBB;
 }
 
-  void TrialMol::SetSeed(const bool inCav, const bool fixCOM)
+  void TrialMol::SetSeed(const bool inCav, const bool fixCOM, const bool rotBB)
 {
   seedInCav = inCav;
   seedFix = fixCOM;
+  rotateBB = rotBB;
 }
 
 XYZ TrialMol::GetCOM()

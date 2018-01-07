@@ -185,20 +185,24 @@ namespace cbmc
       {
 	fLJTrials = 1;
 	totalTrials = nLJTrials;
-	//find the inverse matrix of molecule that we insert
-	XYZ backBone;
-	if(atomNumber != 1)
+	//if we rotate around backbone we need to calc the rotation matrix
+	if(newMol.RotateBB())
 	{
-	  backBone = newMol.GetCoords().Difference(0, atomNumber - 1);
+	  //find the inverse matrix of molecule that we insert
+	  XYZ backBone;
+	  if(atomNumber != 1)
+	  {
+	    backBone = newMol.GetCoords().Difference(0, atomNumber - 1);
+	  }
+	  else
+	  {
+	    backBone = prng.RandomUnitVect();
+	  }
+	  XYZArray T(3);
+	  T.Set(0, backBone);
+	  T.GramSchmidt();
+	  T.TransposeMatrix(invMatrix);
 	}
-	else
-	{
-	  backBone = prng.RandomUnitVect();
-	}
-	XYZArray T(3);
-	T.Set(0, backBone);
-	T.GramSchmidt();
-	T.TransposeMatrix(invMatrix);
       }
  
 
@@ -220,7 +224,7 @@ namespace cbmc
 	//Rotational trial the molecule around COM
 	for (uint r = nLJTrials; r-- > 0;) 
 	{ 
-	  if(newMol.SeedFix())
+	  if(newMol.RotateBB())
 	  {
 	    //we only perform rotation around z axis
 	    RandRotateZ();
@@ -233,7 +237,7 @@ namespace cbmc
 
 	  for (uint a = 0; a < atomNumber; ++a) 
 	  { 
-	    if(newMol.SeedFix())
+	    if(newMol.RotateBB())
 	    {
 	      XYZ coord = multiPosRotions[a][index];
 	      //transform backbone to z axis
@@ -317,8 +321,12 @@ namespace cbmc
       {
 	fLJTrials = 1;
 	totalTrials = nLJTrials;
-	//find the inverse matrix of cavity
-	oldMol.TransposeMatrix(invMatrix);
+	//if we rotate around backbone of the molecule
+	if(oldMol.RotateBB())
+	{
+	  //find the inverse matrix of cavity
+	  oldMol.TransposeMatrix(invMatrix);
+	}
       }
 
       const XYZ orgCenter = COM;
@@ -344,7 +352,7 @@ namespace cbmc
 	  if((index + r) == 0)
 	    continue;
 
-	  if(oldMol.SeedFix())
+	  if(oldMol.RotateBB())
 	  {
 	    //we only perform rotation around z axis
 	    RandRotateZ();
@@ -357,7 +365,7 @@ namespace cbmc
 
 	  for (uint a = 0; a < atomNumber; ++a) 
 	  { 
-	    if(oldMol.SeedFix())
+	    if(oldMol.RotateBB())
 	    {
 	      XYZ coord = multiPosRotions[a][index];
 	      //transform backbone to z axis

@@ -121,14 +121,15 @@ class TrialMol
 
       //!Copies 1 atom's worth of coordinates to sCoords
       void SetSeed(const XYZ& coords, const XYZ& rmax, const bool inCav,
-		   const bool fixCOM);
-      void SetSeed(const bool inCav, const bool fixCOM);
+		   const bool fixCOM, const bool rotBB);
+      void SetSeed(const bool inCav, const bool fixCOM, const bool rotBB);
 
       XYZ Transform(const XYZ& a) {return cavMatrix.Transform(a);}
       void TransposeMatrix(XYZArray &invMatrix)
       {return cavMatrix.TransposeMatrix(invMatrix);}
       bool HasCav() const {return seedInCav;}
       bool SeedFix() const {return seedFix;}
+      bool RotateBB() const {return rotateBB;}
       void SetCavMatrix(const XYZArray& matrix);
       XYZ GetSeed() const {return sCoords;}
       XYZ GetRmax() const {return sRmax;}
@@ -148,7 +149,7 @@ class TrialMol
       Energy en;
       double totalWeight;
       bool* atomBuilt;
-      bool seedInCav, seedFix;
+      bool seedInCav, seedFix, rotateBB;
       RotationMatrix growthToWorld;
       RotationMatrix worldToGrowth;
       XYZ basisPoint;
