@@ -168,7 +168,6 @@ inline void IdentityExchange::AdjustExRatio()
       if(exchangeRate > exMax)
 	exchangeRate = exMax;
     }
-    exchangeRate = 3;
     molInCavCount = 0;
     counter = 0;
   }
@@ -204,23 +203,7 @@ inline uint IdentityExchange::PickMolInCav()
    if(state == mv::fail_state::NO_FAIL)
    {
      center = comCurrRef.Get(pickedS);
-     /*
-     //If we want to orient the cavity with backbone of picked small mol
-     uint pStart = 0;
-     uint pLen = 0;
-     molRef.GetRangeStartLength(pStart, pLen, pickedS);
-     if(pLen == 1)
-     {
-       cavA.Set(0, prng.RandomUnitVect());
-     }
-     else
-     {
-       uint pEnd = pStart + pLen -1;
-       cavA.Set(0, boxDimRef.MinImage(coordCurrRef.Difference(pStart, pEnd),
-				      sourceBox));
-     }
-     */
-     //else Pick random vector and find two vectors that are perpendicular to V1
+     //Pick random vector and find two vectors that are perpendicular to V1
      cavA.Set(0, prng.RandomUnitVect());
      cavA.GramSchmidt();
      //Calculate inverse matrix for cav here Inv = transpose
@@ -292,13 +275,6 @@ inline uint IdentityExchange::ReplaceMolecule()
      molRef.GetRangeStartLength(pStart, pLen, molIndexA[0]);
      //use random for now
      cavA.Set(0, prng.RandomUnitVect());
-     /*
-     {
-       uint pEnd = pStart + pLen -1;
-       cavA.Set(0, boxDimRef.MinImage(coordCurrRef.Difference(pStart, pEnd),
-				      sourceBox));
-     }
-     */
      cavA.GramSchmidt();
      //Calculate inverse matrix for cav. Here Inv = Transpose 
      cavA.TransposeMatrix(invCavA);

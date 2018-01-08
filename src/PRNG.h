@@ -108,11 +108,6 @@ public:
 
   XYZ RandomUnitVect()
   {
-    //XYZ temp;
-    //temp.x = SymExc(1.0);
-    //temp.y = SymExc(1.0);
-    //temp.z = SymExc(1.0);
-    //return temp;
     return PickOnUnitSphere();
   }
 
