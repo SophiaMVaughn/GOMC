@@ -28,6 +28,10 @@ namespace cbmc {
       void Build(TrialMol& oldMol, TrialMol& newMol, uint molIndex);
       void BuildIDNew(TrialMol& newMol, uint molIndex);
       void BuildIDOld(TrialMol& oldMol, uint molIndex);
+      void BuildNew2(TrialMol& newMol, uint molIndex);
+      void BuildOld2(TrialMol& oldMol, uint molIndex);
+      void BuildGrowNew(TrialMol& newMol, uint molIndex);
+      void BuildGrowOld(TrialMol& oldMol, uint molIndex);
       void Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex);
       ~DCLinear();
 

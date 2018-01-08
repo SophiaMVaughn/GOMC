@@ -65,6 +65,18 @@ class MoleculeKind
    void BuildIDOld(cbmc::TrialMol& oldMol, const uint molIndex)
    { builder->BuildIDOld(oldMol, molIndex); }
 
+   void BuildNew(cbmc::TrialMol& newMol, const uint molIndex)
+   { builder->BuildNew2(newMol, molIndex); }
+
+   void BuildOld(cbmc::TrialMol& oldMol, const uint molIndex)
+   { builder->BuildOld2(oldMol, molIndex); }
+
+   void BuildGrowNew(cbmc::TrialMol& newMol, const uint molIndex)
+   { builder->BuildGrowNew(newMol, molIndex); }
+
+   void BuildGrowOld(cbmc::TrialMol& oldMol, const uint molIndex)
+   { builder->BuildGrowOld(oldMol, molIndex); }
+
    void Regrowth(cbmc::TrialMol& oldMol, cbmc::TrialMol& newMol,
 	      const uint molIndex)
    { builder->Regrowth(oldMol, newMol, molIndex); }

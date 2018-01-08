@@ -25,16 +25,11 @@ namespace cbmc {
       void PickTransferCOMOld(TrialMol& oldMol, uint molIndex);
       void BuildOld(TrialMol& oldMol, uint molIndex);
       void BuildNew(TrialMol& newMol, uint molIndex);
-      void RandRotateZ();
       DCComponent* Clone() { return new DCRotateCOM(*this); };
 
    private:
       DCData* data;
       XYZ COM, oldCOM;
-      //rotation matrix around z axis
-      XYZArray rotateMatrix;
-      //inverse of matrix
-      XYZArray invMatrix;
       uint atomNumber;
    };
 }

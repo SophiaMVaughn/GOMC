@@ -168,6 +168,7 @@ inline void IdentityExchange::AdjustExRatio()
       if(exchangeRate > exMax)
 	exchangeRate = exMax;
     }
+    exchangeRate = 3;
     molInCavCount = 0;
     counter = 0;
   }
@@ -289,21 +290,20 @@ inline uint IdentityExchange::ReplaceMolecule()
      uint pStart = 0;
      uint pLen = 0;
      molRef.GetRangeStartLength(pStart, pLen, molIndexA[0]);
-     if(pLen == 1)
-     {
-       cavA.Set(0, prng.RandomUnitVect());
-     }
-     else
+     //use random for now
+     cavA.Set(0, prng.RandomUnitVect());
+     /*
      {
        uint pEnd = pStart + pLen -1;
        cavA.Set(0, boxDimRef.MinImage(coordCurrRef.Difference(pStart, pEnd),
 				      sourceBox));
      }
+     */
      cavA.GramSchmidt();
      //Calculate inverse matrix for cav. Here Inv = Transpose 
      cavA.TransposeMatrix(invCavA);
-     //Use to shift to the COM of new molecule
-     center = comCurrRef.Get(molIndexA[0]);
+     //use the first atom in molecule as the center
+     center = coordCurrRef.Get(pStart);
      //find how many of KindS exist in this center
      calcEnRef.FindMolInCavity(molInCav, center, rmax, invCavA, sourceBox,
 			       kindS, exchangeRate);
@@ -523,7 +523,7 @@ inline uint IdentityExchange::Transform()
     for(uint n = 0; n < numInCavA; n++)
     {
       cellList.RemoveMol(molIndexA[n], sourceBox, coordCurrRef);
-      molRef.kinds[kindIndexA[n]].BuildIDOld(oldMolA[n], molIndexA[n]);
+      molRef.kinds[kindIndexA[n]].BuildGrowOld(oldMolA[n], molIndexA[n]);
     }
   }
   
@@ -531,23 +531,35 @@ inline uint IdentityExchange::Transform()
   for(uint n = 0; n < numInCavB; n++)
   {
     cellList.RemoveMol(molIndexB[n], destBox, coordCurrRef);
-    molRef.kinds[kindIndexB[n]].BuildIDOld(oldMolB[n], molIndexB[n]);
+    molRef.kinds[kindIndexB[n]].BuildOld(oldMolB[n], molIndexB[n]);
   }
   
   //Insert A to destBox
   for(uint n = 0; n < numInCavA; n++)
   {
-    molRef.kinds[kindIndexA[n]].BuildIDNew(newMolA[n], molIndexA[n]);
+    molRef.kinds[kindIndexA[n]].BuildNew(newMolA[n], molIndexA[n]);
     ShiftMol(true, n, sourceBox, destBox);
     cellList.AddMol(molIndexA[n], destBox, coordCurrRef);
   }
 
   //Insert B in sourceBox
-  for(uint n = 0; n < numInCavB; n++)
+  if(insertL)
   {
-    molRef.kinds[kindIndexB[n]].BuildIDNew(newMolB[n], molIndexB[n]);
-    ShiftMol(false, n, destBox, sourceBox);
-    cellList.AddMol(molIndexB[n], sourceBox, coordCurrRef);    
+    for(uint n = 0; n < numInCavB; n++)
+    {
+      molRef.kinds[kindIndexB[n]].BuildGrowNew(newMolB[n], molIndexB[n]);
+      ShiftMol(false, n, destBox, sourceBox);
+      cellList.AddMol(molIndexB[n], sourceBox, coordCurrRef);    
+    }
+  }
+  else
+  {
+    for(uint n = 0; n < numInCavB; n++)
+    {
+      molRef.kinds[kindIndexB[n]].BuildIDNew(newMolB[n], molIndexB[n]);
+      ShiftMol(false, n, destBox, sourceBox);
+      cellList.AddMol(molIndexB[n], sourceBox, coordCurrRef);    
+    }
   }
   
   return mv::fail_state::NO_FAIL;

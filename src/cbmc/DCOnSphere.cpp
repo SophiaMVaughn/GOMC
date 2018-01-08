@@ -61,7 +61,7 @@ namespace cbmc
 	stepWeight += exp(-1 * data->ff.beta * 
 			  (inter[trial] + real[trial])); 
       } 
-      oldMol.MultWeight(stepWeight); 
+      oldMol.MultWeight(stepWeight / nLJTrials); 
       oldMol.AddEnergy(Energy(oldBondEnergy, 0.0, inter[0], real[0], 0.0, 
 			      0.0, 0.0)); 
       oldMol.ConfirmOldAtom(atom); 
@@ -95,7 +95,7 @@ namespace cbmc
          stepWeight += ljWeights[trial]; 
       } 
       uint winner = data->prng.PickWeighted(ljWeights, nLJTrials, stepWeight); 
-      newMol.MultWeight(stepWeight); 
+      newMol.MultWeight(stepWeight / nLJTrials); 
       newMol.AddEnergy(Energy(0, 0, inter[winner], real[winner], 0.0,
 			      0.0, 0.0)); 
       newMol.AddAtom(atom, positions[winner]); 

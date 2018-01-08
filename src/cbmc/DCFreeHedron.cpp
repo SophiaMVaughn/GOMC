@@ -114,7 +114,7 @@ namespace cbmc
 			      inter[winner], real[winner], 
 			      0.0, 0.0, 0.0)); 
       newMol.MultWeight(hed.GetWeight()); 
-      newMol.MultWeight(stepWeight); 
+      newMol.MultWeight(stepWeight / nLJTrials); 
    } 
  
    void DCFreeHedron::BuildOld(TrialMol& oldMol, uint molIndex) 
@@ -198,7 +198,7 @@ namespace cbmc
 			      hed.GetOldBondEn(), hed.GetNonBondedEn(), 
 			      inter[0], real[0], 0.0, 0.0, 0.0)); 
       oldMol.MultWeight(hed.GetWeight()); 
-      oldMol.MultWeight(stepWeight); 
+      oldMol.MultWeight(stepWeight / nLJTrials); 
    } 
  
  

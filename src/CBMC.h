@@ -30,6 +30,12 @@ public:
   //will be modified to contain the energies of the old and new sites
   virtual void BuildIDNew(TrialMol& newMol, uint molIndex) = 0;
   virtual void BuildIDOld(TrialMol& oldMol, uint molIndex) = 0;
+  
+  virtual void BuildNew2(TrialMol& newMol, uint molIndex) = 0;
+  virtual void BuildOld2(TrialMol& oldMol, uint molIndex) = 0;
+  
+  virtual void BuildGrowNew(TrialMol& newMol, uint molIndex) = 0;
+  virtual void BuildGrowOld(TrialMol& oldMol, uint molIndex) = 0;
 
   virtual void Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex) = 0;
 

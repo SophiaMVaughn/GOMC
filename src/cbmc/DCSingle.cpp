@@ -21,9 +21,17 @@ namespace cbmc
       std::fill_n(inter, nLJTrials, 0.0);  
       std::fill_n(real, nLJTrials, 0.0); 
  
-      prng.FillWithRandom(positions, nLJTrials, 
-			    data->axes.GetAxis(oldMol.GetBox())); 
-      positions.Set(0, oldMol.AtomPosition(atom));
+      if(oldMol.SeedFix())
+      {
+	nLJTrials = 1;
+      }
+      else
+      {
+	prng.FillWithRandom(positions, nLJTrials, 
+			    data->axes.GetAxis(oldMol.GetBox()));
+      }      
+      positions.Set(0, data->axes.WrapPBC(oldMol.AtomPosition(atom),
+					  oldMol.GetBox()));
    
       data->calc.ParticleInter(inter, real, positions, atom, molIndex, 
                                oldMol.GetBox(), nLJTrials);  
@@ -33,7 +41,7 @@ namespace cbmc
          stepWeight += exp(-1 * data->ff.beta * 
 			   (inter[trial] + real[trial])); 
       } 
-      oldMol.MultWeight(stepWeight); 
+      oldMol.MultWeight(stepWeight / nLJTrials); 
       oldMol.AddEnergy(Energy(0.0, 0.0, inter[0], real[0], 
 			      0.0, 0.0, 0.0)); 
       oldMol.ConfirmOldAtom(atom); 
@@ -52,9 +60,16 @@ namespace cbmc
       std::fill_n(real, nLJTrials, 0.0); 
       std::fill_n(ljWeights, nLJTrials, 0.0); 
  
-      prng.FillWithRandom(positions, nLJTrials, 
-			  data->axes.GetAxis(newMol.GetBox())); 
-
+      if(newMol.SeedFix())
+      {
+	nLJTrials = 1;
+	positions.Set(0, data->axes.WrapPBC(newMol.GetSeed(), newMol.GetBox()));
+      }
+      else
+      {
+	prng.FillWithRandom(positions, nLJTrials, 
+			    data->axes.GetAxis(newMol.GetBox())); 
+      }
       data->calc.ParticleInter(inter, real, positions, atom, molIndex, 
                                newMol.GetBox(), nLJTrials);
 
@@ -67,7 +82,7 @@ namespace cbmc
       } 
 
       uint winner = prng.PickWeighted(ljWeights, nLJTrials, stepWeight); 
-      newMol.MultWeight(stepWeight); 
+      newMol.MultWeight(stepWeight / nLJTrials); 
       newMol.AddEnergy(Energy(0.0, 0.0, inter[winner], real[winner], 
 			      0.0, 0.0, 0.0)); 
       newMol.AddAtom(atom, positions[winner]); 

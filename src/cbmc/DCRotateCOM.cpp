@@ -52,22 +52,9 @@ namespace cbmc
 { 
  
    DCRotateCOM::DCRotateCOM(DCData* data) 
-     : data(data), rotateMatrix(3), invMatrix(3)
-   {
-     rotateMatrix.Set(0, 0.0, 0.0, 0.0);
-     rotateMatrix.Set(1, 0.0, 0.0, 0.0);
-     rotateMatrix.Set(2, 0.0, 0.0, 1.0);
-   } 
+     : data(data) {} 
  
-   void DCRotateCOM::RandRotateZ()
-   {
-     PRNG& prng = data->prng;
-     double theta = prng.randExc(2 * M_PI);
-     double cosTheta = cos(theta);
-     double sinTheta = sin(theta);
-     rotateMatrix.Set(0, cosTheta, sinTheta, 0.0);
-     rotateMatrix.Set(1, -sinTheta, cosTheta, 0.0);
-   }
+
  
    void DCRotateCOM::PrepareNew(TrialMol& newMol, uint molIndex) 
    { 
@@ -185,24 +172,6 @@ namespace cbmc
       {
 	fLJTrials = 1;
 	totalTrials = nLJTrials;
-	//if we rotate around backbone we need to calc the rotation matrix
-	if(newMol.RotateBB())
-	{
-	  //find the inverse matrix of molecule that we insert
-	  XYZ backBone;
-	  if(atomNumber != 1)
-	  {
-	    backBone = newMol.GetCoords().Difference(0, atomNumber - 1);
-	  }
-	  else
-	  {
-	    backBone = prng.RandomUnitVect();
-	  }
-	  XYZArray T(3);
-	  T.Set(0, backBone);
-	  T.GramSchmidt();
-	  T.TransposeMatrix(invMatrix);
-	}
       }
  
 
@@ -224,36 +193,14 @@ namespace cbmc
 	//Rotational trial the molecule around COM
 	for (uint r = nLJTrials; r-- > 0;) 
 	{ 
-	  if(newMol.RotateBB())
-	  {
-	    //we only perform rotation around z axis
-	    RandRotateZ();
-	  }
-	  else
-	  {
-	    //convert chosen torsion to 3D positions 
-	    spin = RotationMatrix::UniformRandom(prng(), prng(), prng()); 
-	  }
+	  //convert chosen torsion to 3D positions 
+	  spin = RotationMatrix::UniformRandom(prng(), prng(), prng());
 
 	  for (uint a = 0; a < atomNumber; ++a) 
 	  { 
-	    if(newMol.RotateBB())
-	    {
-	      XYZ coord = multiPosRotions[a][index];
-	      //transform backbone to z axis
-	      coord = invMatrix.Transform(coord);
-	      //rotate around z
-	      coord = rotateMatrix.Transform(coord);
-	      //transfer backbone to cavity orientation
-	      coord = newMol.Transform(coord);
-	      multiPosRotions[a].Set(index + r, coord); 
-	    }
-	    else
-	    {
-	      //find positions 
-	      multiPosRotions[a].Set(index + r,
-				     spin.Apply(multiPosRotions[a][index])); 
-	    }
+	    //find positions 
+	    multiPosRotions[a].Set(index + r,
+				   spin.Apply(multiPosRotions[a][index]));
 	    multiPosRotions[a].Add(index + r, center); 
 	  } 
 	}
@@ -321,12 +268,6 @@ namespace cbmc
       {
 	fLJTrials = 1;
 	totalTrials = nLJTrials;
-	//if we rotate around backbone of the molecule
-	if(oldMol.RotateBB())
-	{
-	  //find the inverse matrix of cavity
-	  oldMol.TransposeMatrix(invMatrix);
-	}
       }
 
       const XYZ orgCenter = COM;
@@ -352,40 +293,17 @@ namespace cbmc
 	  if((index + r) == 0)
 	    continue;
 
-	  if(oldMol.RotateBB())
-	  {
-	    //we only perform rotation around z axis
-	    RandRotateZ();
-	  }
-	  else
-	  {
-	    //convert chosen torsion to 3D positions 
-	   spin =  RotationMatrix::UniformRandom(prng(), prng(), prng()); 
-	  }
+	  //convert chosen torsion to 3D positions 
+	  spin =  RotationMatrix::UniformRandom(prng(), prng(), prng()); 
 
 	  for (uint a = 0; a < atomNumber; ++a) 
 	  { 
-	    if(oldMol.RotateBB())
-	    {
-	      XYZ coord = multiPosRotions[a][index];
-	      //transform backbone to z axis
-	      coord = invMatrix.Transform(coord);
-	      //rotate around z
-	      coord = rotateMatrix.Transform(coord);
-	      //transfer backbone to cavity orientation
-	      coord = oldMol.Transform(coord);
-	      multiPosRotions[a].Set(index + r, coord); 
-	    }
-	    else
-	    {
-	      //find positions 
-	      multiPosRotions[a].Set(index + r,
-				     spin.Apply(multiPosRotions[a][index])); 
-	    }
+	    //find positions 
+	    multiPosRotions[a].Set(index + r,
+				   spin.Apply(multiPosRotions[a][index])); 
             multiPosRotions[a].Add(index + r, center); 
 	  } 
 	}
- 
 	//Pick a new position for COM and transfer the molecule
 	PickTransferCOMOld(oldMol, molIndex);
       }
