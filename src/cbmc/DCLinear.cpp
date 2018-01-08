@@ -83,11 +83,11 @@ void DCLinear::BuildIDOld(TrialMol& oldMol, uint molIndex)
 void DCLinear::Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
 {
   //perform Intra-Swap move within the same box
-  if(forward.size() < 2)
+  if(atomSize < 2)
   {
     return Build(oldMol, newMol, molIndex);
   }
-  else if(forward.size() < 3)
+  else if(atomSize < 3)
   {
     //we only have two atoms in molecule: atom 0, 1
     uint fix = data.prng.randInt(1);
