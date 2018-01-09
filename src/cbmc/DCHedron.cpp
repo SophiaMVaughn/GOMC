@@ -43,14 +43,6 @@ namespace cbmc
       using namespace mol_setup;
       using namespace std;
       vector<Bond> onFocus = AtomBonds(kind, focus);
-      for(uint i = 0; i < onFocus.size(); ++i) 
-      {
-	    if (onFocus[i].a1 == prev) 
-	    {
-               anchorBond = data->ff.bonds.Length(onFocus[i].kind);
-               break;
-            }
-      }
       
       onFocus.erase(remove_if(onFocus.begin(), onFocus.end(), FindA1(prev)),
 		    onFocus.end());
@@ -225,6 +217,7 @@ namespace cbmc
       
       bendEnergy = 0.0;
       oneThree = 0.0;
+      anchorBond = sqrt(newMol.OldDistSq(focus, prev));
       FreeAnglesNew(newMol, molIndex, data->nAngleTrials);
       ConstrainedAngles(newMol, molIndex, data->nAngleTrials);
    }
@@ -243,8 +236,6 @@ namespace cbmc
 
       bendEnergy = 0.0;
       FreeAnglesOld(oldMol, molIndex, data->nAngleTrials - 1);
-
-
    }
 
 
