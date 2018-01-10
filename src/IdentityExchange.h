@@ -153,7 +153,7 @@ inline void IdentityExchange::AdjustExRatio()
     double currAccept = moveSetRef.GetAccept(subPick);
     if(abs(currAccept - lastAccept) > 0.05 * currAccept)
     {
-      if(currAccept > lastAccept)
+      if(currAccept >= lastAccept)
       {
 	exchangeRate += exDiff;
       }
