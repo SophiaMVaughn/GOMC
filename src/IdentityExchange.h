@@ -170,6 +170,8 @@ inline void IdentityExchange::AdjustExRatio()
     }
     molInCavCount = 0;
     counter = 0;
+    printf("Average Mol In Cavity: %d. Exchange Ratio: %d \n", exMax,
+	   exchangeRate);
   }
 }
 
@@ -190,7 +192,7 @@ inline void IdentityExchange::PrintAcceptance(const uint step)
 	}
       }
     }
-    printf("Exchange ratio: %d\n", exchangeRate);
+    //printf("Exchange ratio: %d\n", exchangeRate);
   }
 }
 
