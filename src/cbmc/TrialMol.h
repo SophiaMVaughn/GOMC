@@ -106,7 +106,7 @@ class TrialMol
       uint GetBox() const { return box; }
       const BoxDimensions& GetAxes() const { return *axes; }
       const MoleculeKind& GetKind() const { return *kind; }
-      const bool OneFour() { return kind->oneFour;}
+      bool OneFour() const { return kind->oneFour;}
 
       //!Returns reference to coordinates of TrialMol.
       const XYZArray& GetCoords() const { return tCoords; }
