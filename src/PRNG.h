@@ -106,14 +106,17 @@ public:
     loc = temp;
   }
 
+  //using UniformRandom algorithm in TransformMatrix.h
   XYZ RandomUnitVect()
   {
-    //XYZ temp;
-    //temp.x = SymExc(1.0);
-    //temp.y = SymExc(1.0);
-    //temp.z = SymExc(1.0);
-    //return temp;
-    return PickOnUnitSphere();
+    double u2 = gen->rand();
+    double u3 = gen->rand();
+    u2 *= 2.0 * M_PI;
+    u3 *= 2.0;
+    double r = sqrt(u3);
+    double root = sqrt(2.0 - u3);
+    XYZ temp(sin(u2) * r * root, cos(u2) * r * root, 1.0 - u3);
+    return  temp;
   }
 
   //Used to pick first position in cavity

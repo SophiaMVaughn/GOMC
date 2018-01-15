@@ -62,11 +62,13 @@ namespace cbmc
    void DCRotateCOM::RandRotateZ()
    {
      PRNG& prng = data->prng;
-     double theta = prng.randExc(2 * M_PI);
+     double theta = prng();
+     theta *= 2.0 * M_PI;
+     theta -= M_PI;
      double cosTheta = cos(theta);
      double sinTheta = sin(theta);
-     rotateMatrix.Set(0, cosTheta, sinTheta, 0.0);
-     rotateMatrix.Set(1, -sinTheta, cosTheta, 0.0);
+     rotateMatrix.Set(0, cosTheta, -sinTheta, 0.0);
+     rotateMatrix.Set(1, sinTheta, cosTheta, 0.0);
    }
  
    void DCRotateCOM::PrepareNew(TrialMol& newMol, uint molIndex) 

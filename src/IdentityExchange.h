@@ -353,7 +353,7 @@ inline uint IdentityExchange::GetBoxPairAndMol(const double subDraw,
 #endif
 
    //adjust exchange rate based on number of small kind in cavity
-   AdjustExRatio();
+   //AdjustExRatio();
 
    if(insertL)
    {
