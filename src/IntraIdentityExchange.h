@@ -291,17 +291,17 @@ inline uint IntraIdentityExchange::Prep(const double subDraw,
      for(uint n = 0; n < numInCavB; n++)
      {
        //Inserting molB from centerB to the centerA 
-       newMolB[n].SetSeed(centerA, rmax, true, true); 
+       newMolB[n].SetSeed(centerA, rmax, true, true, true); 
        //perform rotational trial move for oldMolB
-       oldMolB[n].SetSeed(centerB, rmax, true, true); 
+       oldMolB[n].SetSeed(centerB, rmax, true, true, true); 
      }
 
      for(uint n = 0; n < numInCavA; n++)
      {
        //Inserting molA from cavity(centerA) to the cavityB(centerB)
-       newMolA[n].SetSeed(centerB, rmax, true, false);
+       newMolA[n].SetSeed(centerB, rmax, true, false, false);
        //perform trial move in cavity in sourceBox for oldMolA
-       oldMolA[n].SetSeed(centerA, rmax, true, false); 
+       oldMolA[n].SetSeed(centerA, rmax, true, false, false); 
      }
    }
 
