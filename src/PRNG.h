@@ -432,14 +432,12 @@ public:
       for(uint i = 0; i < n; i++)
       {
 	//Among the ones of that kind in that dest box, pick one @ random.
-	uint mOff2 = randIntExc(molLookRef.NumKindInBox(MK2, b));
-	//Lookup true index in table.
-	uint M2 = molLookRef.GetMolNum(mOff2, MK2, b);
-	while(std::find(m2.begin(), m2.end(), M2) != m2.end())
+	uint mOff2, M2;
+	do
 	{
 	  mOff2 = randIntExc(molLookRef.NumKindInBox(MK2, b));
 	  M2 = molLookRef.GetMolNum(mOff2, MK2, b);
-	}
+	}while(std::find(m2.begin(), m2.end(), M2) != m2.end());
 	m2.push_back(M2);
       }
     }
