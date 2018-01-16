@@ -205,9 +205,7 @@ inline uint IdentityExchange::PickMolInCav()
    {
      center = comCurrRef.Get(pickedS);
      //Pick random vector and find two vectors that are perpendicular to V1
-     //cavA.Set(0, prng.RandomUnitVect());
-     //use k for z direction
-     cavA.Set(0, XYZ(0.0, 0.0, 1.0));
+     cavA.Set(0, prng.RandomUnitVect());
      cavA.GramSchmidt();
      //Calculate inverse matrix for cav here Inv = transpose
      cavA.TransposeMatrix(invCavA);
