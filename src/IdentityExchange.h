@@ -132,6 +132,7 @@ class IdentityExchange : public MoveBase
 
    int exDiff;
    double volCav, lastAccept;
+   double numTypeASource, numTypeBSource, numTypeADest, numTypeBDest;
    XYZ center, rmax;
    XYZArray cavA, invCavA;
    double W_tc, W_recip;
@@ -403,6 +404,11 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
      oldMolA.clear();
      newMolB.clear();
      oldMolB.clear();
+     
+     numTypeASource =(double)(molLookRef.NumKindInBox(kindIndexA[0],sourceBox));
+     numTypeADest = (double)(molLookRef.NumKindInBox(kindIndexA[0], destBox));
+     numTypeBSource =(double)(molLookRef.NumKindInBox(kindIndexB[0],sourceBox));
+     numTypeBDest =(double)(molLookRef.NumKindInBox(kindIndexB[0], destBox));
      //transfering type A from source to dest
      for(uint n = 0; n < numInCavA; n++)
      {
@@ -621,10 +627,6 @@ inline void IdentityExchange::CalcEn()
 
 inline double IdentityExchange::GetCoeff() const
 {
-  double numTypeASource = molLookRef.NumKindInBox(kindIndexA[0], sourceBox);
-  double numTypeADest = molLookRef.NumKindInBox(kindIndexA[0], destBox);
-  double numTypeBSource = molLookRef.NumKindInBox(kindIndexB[0], sourceBox);
-  double numTypeBDest = molLookRef.NumKindInBox(kindIndexB[0], destBox);
   double volSource = boxDimRef.volume[sourceBox];
   double volDest = boxDimRef.volume[destBox];
 #if ENSEMBLE == GEMC
