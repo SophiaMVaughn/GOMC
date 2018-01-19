@@ -522,6 +522,8 @@ inline uint IdentityExchange::Transform()
     {
       cellList.RemoveMol(molIndexA[n-1], sourceBox, coordCurrRef);
       molRef.kinds[kindIndexA[n-1]].BuildIDOld(oldMolA[n-1], molIndexA[n-1]);
+      //Add bonded energy because we dont considered in DCRotate.cpp
+      calcEnRef.MoleculeIntra(oldMolA[n-1], molIndexA[n-1]);
     }
   }
   else
@@ -530,6 +532,8 @@ inline uint IdentityExchange::Transform()
     {
       cellList.RemoveMol(molIndexA[n], sourceBox, coordCurrRef);
       molRef.kinds[kindIndexA[n]].BuildIDOld(oldMolA[n], molIndexA[n]);
+      //Add bonded energy because we dont considered in DCRotate.cpp
+      calcEnRef.MoleculeIntra(oldMolA[n], molIndexA[n]);
     }
   }
   
@@ -538,6 +542,8 @@ inline uint IdentityExchange::Transform()
   {
     cellList.RemoveMol(molIndexB[n], destBox, coordCurrRef);
     molRef.kinds[kindIndexB[n]].BuildIDOld(oldMolB[n], molIndexB[n]);
+    //Add bonded energy because we dont considered in DCRotate.cpp
+    calcEnRef.MoleculeIntra(oldMolB[n], molIndexB[n]);
   }
   
   //Insert A to destBox
@@ -546,6 +552,8 @@ inline uint IdentityExchange::Transform()
     molRef.kinds[kindIndexA[n]].BuildIDNew(newMolA[n], molIndexA[n]);
     ShiftMol(true, n, sourceBox, destBox);
     cellList.AddMol(molIndexA[n], destBox, coordCurrRef);
+    //Add bonded energy because we dont considered in DCRotate.cpp
+    calcEnRef.MoleculeIntra(newMolA[n], molIndexA[n]);
   }
 
   //Insert B in sourceBox
@@ -553,7 +561,9 @@ inline uint IdentityExchange::Transform()
   {
     molRef.kinds[kindIndexB[n]].BuildIDNew(newMolB[n], molIndexB[n]);
     ShiftMol(false, n, destBox, sourceBox);
-    cellList.AddMol(molIndexB[n], sourceBox, coordCurrRef);    
+    cellList.AddMol(molIndexB[n], sourceBox, coordCurrRef);   
+    //Add bonded energy because we dont considered in DCRotate.cpp
+    calcEnRef.MoleculeIntra(newMolB[n], molIndexB[n]);
   }
   
   return mv::fail_state::NO_FAIL;
