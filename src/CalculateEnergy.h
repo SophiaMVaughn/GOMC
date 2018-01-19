@@ -7,6 +7,7 @@
 #include "Ewald.h"
 #include "NoEwald.h"
 #include "CellList.h"
+#include "TrialMol.h"
 
 #include <vector>
 
@@ -130,6 +131,9 @@ public:
 
   //! Calculates intramolecular energy of a full molecule
   double* MoleculeIntra(const uint molIndex, const uint box) const;
+
+  //used in identity exchange for calculating bonded and intraNonbonded energy
+  void MoleculeIntra(cbmc::TrialMol &mol, const uint molIndex) const;
 
   //! Calculates Nonbonded 1_3 intramolecule energy of a full molecule
   //for Martini forcefield

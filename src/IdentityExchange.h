@@ -498,6 +498,8 @@ inline uint IdentityExchange::Transform()
     {
       cellList.RemoveMol(molIndexA[n-1], sourceBox, coordCurrRef);
       molRef.kinds[kindIndexA[n-1]].BuildIDOld(oldMolA[n-1], molIndexA[n-1]);
+      //Add bonded energy because we dont considered in DCRotate.cpp
+      calcEnRef.MoleculeIntra(oldMolA[n-1], molIndexA[n-1]);
     }
   }
   else
@@ -540,7 +542,9 @@ inline uint IdentityExchange::Transform()
     {
       molRef.kinds[kindIndexB[n]].BuildIDNew(newMolB[n], molIndexB[n]);
       ShiftMol(false, n, destBox, sourceBox);
-      cellList.AddMol(molIndexB[n], sourceBox, coordCurrRef);    
+      cellList.AddMol(molIndexB[n], sourceBox, coordCurrRef);
+      //Add bonded energy because we dont considered in DCRotate.cpp
+      calcEnRef.MoleculeIntra(newMolB[n], molIndexB[n]);
     }
   }
   
