@@ -204,7 +204,7 @@ inline uint IdentityExchange::PickMolInCav()
    if(state == mv::fail_state::NO_FAIL)
    {
      center = comCurrRef.Get(pickedS);
-     /*
+     ///*
      //If we want to orient the cavity with backbone of picked small mol
      uint pStart = 0;
      uint pLen = 0;
@@ -219,9 +219,9 @@ inline uint IdentityExchange::PickMolInCav()
        cavA.Set(0, boxDimRef.MinImage(coordCurrRef.Difference(pStart, pEnd),
 				      sourceBox));
      }
-     */
+     //*/
      //else Pick random vector and find two vectors that are perpendicular to V1
-     cavA.Set(0, prng.RandomUnitVect());
+     //cavA.Set(0, prng.RandomUnitVect());
      cavA.GramSchmidt();
      //Calculate inverse matrix for cav here Inv = transpose
      cavA.TransposeMatrix(invCavA);
@@ -467,7 +467,7 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
 	 if(n == 0)
 	 {
 	   //Inserting Smol from destBox to the center of cavity in sourceBox
-	   newMolB[n].SetSeed(center, rmax, true, true, false);
+	   newMolB[n].SetSeed(center, rmax, true, true, true);
 	 }
 	 else
 	 {
@@ -488,7 +488,7 @@ inline uint IdentityExchange::Prep(const double subDraw, const double movPerc)
 	 if(n == 0)
 	 {
 	   //perform trial move in cavity with fix COM for S oldMol
-	   oldMolA[n].SetSeed(center, rmax, true, true, false);
+	   oldMolA[n].SetSeed(center, rmax, true, true, true);
 	 }
 	 else
 	 {
