@@ -490,7 +490,7 @@ inline uint IdentityExchange::Transform()
 {
   CalcTc();
 
-  //Calc Old energy and delete A from source
+  //Deleting A, B from their box
   if(insertL)
   {
     //Remove the fixed COM small mol at the end because we insert it at fist
@@ -501,34 +501,42 @@ inline uint IdentityExchange::Transform()
       //Add bonded energy because we dont considered in DCRotate.cpp
       calcEnRef.MoleculeIntra(oldMolA[n-1], molIndexA[n-1]);
     }
+    //Calc old energy and delete Large kind from dest box
+    for(uint n = 0; n < numInCavB; n++)
+    {
+      cellList.RemoveMol(molIndexB[n], destBox, coordCurrRef);
+      molRef.kinds[kindIndexB[n]].BuildOld(oldMolB[n], molIndexB[n]);
+    }
   }
   else
   {
+    //Calc old energy and delete Large kind from source box
     for(uint n = 0; n < numInCavA; n++)
     {
       cellList.RemoveMol(molIndexA[n], sourceBox, coordCurrRef);
       molRef.kinds[kindIndexA[n]].BuildGrowOld(oldMolA[n], molIndexA[n]);
     }
+    //Calc old energy and delete Small kind from dest box
+    for(uint n = 0; n < numInCavB; n++)
+    {
+      cellList.RemoveMol(molIndexB[n], destBox, coordCurrRef);
+      molRef.kinds[kindIndexB[n]].BuildIDOld(oldMolB[n], molIndexB[n]);
+      calcEnRef.MoleculeIntra(oldMolB[n], molIndexB[n]);
+    }
   }
-  
-  //Calc old energy and delete B from destBox
-  for(uint n = 0; n < numInCavB; n++)
-  {
-    cellList.RemoveMol(molIndexB[n], destBox, coordCurrRef);
-    molRef.kinds[kindIndexB[n]].BuildOld(oldMolB[n], molIndexB[n]);
-  }
-  
-  //Insert A to destBox
-  for(uint n = 0; n < numInCavA; n++)
-  {
-    molRef.kinds[kindIndexA[n]].BuildNew(newMolA[n], molIndexA[n]);
-    ShiftMol(true, n, sourceBox, destBox);
-    cellList.AddMol(molIndexA[n], destBox, coordCurrRef);
-  }
-
-  //Insert B in sourceBox
+    
+  //Inserting A, B to new box
   if(insertL)
   {
+    //Insert Small kind to destBox
+    for(uint n = 0; n < numInCavA; n++)
+    {
+      molRef.kinds[kindIndexA[n]].BuildIDNew(newMolA[n], molIndexA[n]);
+      ShiftMol(true, n, sourceBox, destBox);
+      cellList.AddMol(molIndexA[n], destBox, coordCurrRef);
+      calcEnRef.MoleculeIntra(newMolA[n], molIndexA[n]);
+    }
+    //Insert Large kind to sourceBox
     for(uint n = 0; n < numInCavB; n++)
     {
       molRef.kinds[kindIndexB[n]].BuildGrowNew(newMolB[n], molIndexB[n]);
@@ -538,6 +546,14 @@ inline uint IdentityExchange::Transform()
   }
   else
   {
+    //Insert Large kind to destBox
+    for(uint n = 0; n < numInCavA; n++)
+    {
+      molRef.kinds[kindIndexA[n]].BuildNew(newMolA[n], molIndexA[n]);
+      ShiftMol(true, n, sourceBox, destBox);
+      cellList.AddMol(molIndexA[n], destBox, coordCurrRef);
+    }
+    //Insert Small kind to sourceBox
     for(uint n = 0; n < numInCavB; n++)
     {
       molRef.kinds[kindIndexB[n]].BuildIDNew(newMolB[n], molIndexB[n]);
@@ -547,7 +563,7 @@ inline uint IdentityExchange::Transform()
       calcEnRef.MoleculeIntra(newMolB[n], molIndexB[n]);
     }
   }
-  
+
   return mv::fail_state::NO_FAIL;
 }
 
