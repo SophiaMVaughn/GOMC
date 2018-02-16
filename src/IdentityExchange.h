@@ -345,8 +345,8 @@ inline uint IdentityExchange::GetBoxPairAndMol(const double subDraw,
    //Pick box in dense phase
    sourceBox = densB; 
    //Pick the destination box
-   //prng.SetOtherBox(destBox, sourceBox);
-   prng.PickBoxPair(sourceBox, destBox, subDraw, movPerc);
+   prng.SetOtherBox(destBox, sourceBox);
+   //prng.PickBoxPair(sourceBox, destBox, subDraw, movPerc);
 
 #elif ENSEMBLE == GCMC
    sourceBox = 0;
