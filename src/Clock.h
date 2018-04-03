@@ -19,6 +19,10 @@ struct Clock
     lastStep = totSt - 1;
   }
   void CheckTime(const uint step);
+  void SetStart();
+  void SetStop();
+  double GetTimDiff();
+
 private:
   double TimeInSec(const double strt, const double stp)
   {
@@ -30,6 +34,7 @@ private:
   double strt, stop, lastTime;
   ulong stepsPerOut, prevStep, lastStep;
 };
+
 
 inline void Clock::CheckTime(const uint step)
 {
@@ -48,8 +53,26 @@ inline void Clock::CheckTime(const uint step)
     gettimeofday(&tv, &tz);
     stop = (double)tv.tv_sec + (double)tv.tv_usec/1000000;
     std::cout << "Simulation Time (total): " << (stop - strt)
-              << "sec." << std::endl;
+              << " sec." << std::endl;
   }
+}
+
+
+inline void Clock::SetStart()
+{
+  gettimeofday(&tv, &tz);
+  strt = (double)tv.tv_sec + (double)tv.tv_usec/1000000;
+}
+
+inline void Clock::SetStop()
+{
+  gettimeofday(&tv, &tz);
+  stop = (double)tv.tv_sec + (double)tv.tv_usec/1000000;
+}
+
+inline double Clock::GetTimDiff()
+{
+  return (stop - strt);
 }
 
 #endif /*CLOCK_H*/
