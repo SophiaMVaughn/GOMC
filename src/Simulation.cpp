@@ -55,6 +55,7 @@ void Simulation::RunSimulation(void)
          RunningCheck(step);
 #endif
    }
+   system->PrintTime();
 }
 
 #ifndef NDEBUG
