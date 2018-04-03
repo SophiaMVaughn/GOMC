@@ -15,6 +15,7 @@
 #include "MoleculeLookup.h"
 #include "MoveSettings.h"
 #include "CellList.h"
+#include "Clock.h"
 
 //Initialization variables
 class Setup;
@@ -30,6 +31,8 @@ class System
 
    //Runs move, picked at random
    void ChooseAndRunMove(const uint step);
+   //print move time
+   void PrintTime();
 
    // return ewald
    EwaldCached * GetEwald()
@@ -82,6 +85,8 @@ class System
    void Accept(const uint kind, const uint rejectState, const uint step);
 
    MoveBase * moves[mv::MOVE_KINDS_TOTAL];
+   double moveTime[mv::MOVE_KINDS_TOTAL];
+   Clock time;
 };
 
 #endif /*SYSTEM_H*/
