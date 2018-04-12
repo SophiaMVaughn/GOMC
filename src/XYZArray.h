@@ -2,6 +2,7 @@
 #define XYZ_ARRAY_H
 
 #include "BasicTypes.h"
+#include "GeomLib.h"
 #include <string.h> //for memset, memcpy, etc.
 #include <stdio.h> //for memset, memcpy, etc.
 #include <utility>      //for swap (most modern compilers)
@@ -365,6 +366,7 @@ inline void swap(XYZArray& a1, XYZArray& a2)
   swap(a1.y, a2.y);
   swap(a1.z, a2.z);
   swap(a1.count, a2.count);
+  swap(a1.allocDone, a2.allocDone);
 }
 
 inline void XYZArray::Uninit()
@@ -534,35 +536,28 @@ inline void XYZArray::CopyRange(XYZArray & dest, const uint srcIndex,
 }
 
 
-//Find two vectors that are perpendicular to V1 using Gram-Schmidt method
+//Find two vectors that are perpendicular to V1
 inline void XYZArray::GramSchmidt()
 {
-  XYZ U1, U2, U3;
-  XYZ V1 = this->Get(0);
-  XYZ V2(1.0, 0.0, 0.0);
-  XYZ V3(0.0, 1.0, 0.0);
-  //We have to make sure that V1, V2, V3 are independent fro meach other
-  if(abs(V1.z) < 0.0001)
-  {
-    if(abs(V1.x) < 0.0001)
-    {
-      V3 = XYZ(0.0, 0.0, 1.0);
-    }
-    else
-    {
-      V2 = XYZ(0.0, 0.0, 1.0);
-    }
+  using namespace geom;
+  XYZ v1 = this->Get(0);
+  v1.Normalize();
+  XYZ v2;
+  if(abs(v1.x) < 0.8) {
+    //v3 will be v1 x the standard X unit vec
+    v2 = XYZ(1.0, 0.0, 0.0);
+  } else {
+    //v3 will be v1 x the standard Y unit vec
+    v2 = XYZ(0.0, 1.0, 0.0);
   }
-
-  //normalize U1
-  U1 = V1.Normalize();
-  U2 = V2 - (U1 * V2.DotProduct(U1));
-  U2.Normalize();
-  U3 = V3 - (U1 * V3.DotProduct(U1)) - (U2 * V3.DotProduct(U2));
-  U3.Normalize();
-  this->Set(0, U2);
-  this->Set(1, U3);
-  this->Set(2, U1);
+  XYZ v3 = Cross(v1, v2);
+  v3.Normalize();
+  //v2 is unit vec perpendicular to both v3 and v2
+  v2 = Cross(v3, v1);
+  //set v1 az z axis of cell basis
+  this->Set(0, v3);
+  this->Set(1, v2);
+  this->Set(2, v1);
 }
 
 inline void XYZArray::InvMatrix(XYZArray &Inv)

@@ -8,7 +8,6 @@ along with this program, also can be found at <http://www.gnu.org/licenses/>.
 #define DCLINEAR_H
 #include "CBMC.h"
 #include "DCData.h"
-#include "DCGraph.h"
 #include <vector>
 
 class System;
@@ -37,8 +36,6 @@ namespace cbmc {
 
    private:
       uint atomSize;
-      //used for when number of atom >= 3
-      DCGraph *graph;
       //used for when number of atom < 3
       std::vector<DCComponent*> forward, backward;
       DCComponent* idExchange;

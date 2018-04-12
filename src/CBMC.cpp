@@ -12,6 +12,7 @@ namespace cbmc
 CBMC* MakeCBMC(System& sys, const Forcefield& ff,
                const MoleculeKind& kind, const Setup& set)
 {
+/*
   std::vector<uint> bondCount(kind.NumAtoms(), 0);
   for (uint i = 0; i < kind.bondList.count; ++i)
   {
@@ -25,15 +26,15 @@ CBMC* MakeCBMC(System& sys, const Forcefield& ff,
       branched = true;
   }
   bool cyclic = (kind.NumBonds() > kind.NumAtoms() - 1) ? true : false;
+*/
 
-  if (branched)
-  {
+  //Any molecule woth 3 atoms and more will be built in DCGraph
+  if (kind.NumAtoms() > 2) {
     return new DCGraph(sys, ff, kind, set);
-  }
-  else
-  {
+  } else {
     return new DCLinear(sys, ff, kind, set);
   }
+
 }
 
 }
