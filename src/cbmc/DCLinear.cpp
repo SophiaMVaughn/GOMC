@@ -17,21 +17,13 @@ DCLinear::DCLinear(System& sys, const Forcefield& ff,
   atomSize = size;
 
   idExchange = new DCRotateCOM(&data);
-
-  if(atomSize < 3)
-  {
-    forward.push_back(new DCSingle(&data, 0));
-    backward.push_back(new DCSingle(&data, size - 1));
-
-    if(size < 2)
-      return;
-  
+  //First atom of the molecule
+  forward.push_back(new DCSingle(&data, 0));
+  backward.push_back(new DCSingle(&data, size - 1));
+  //second atom of the molecule
+  if(atomSize < 3) {
     forward.push_back(new DCOnSphere(&data, setupKind, 1, 0));
     backward.push_back(new DCOnSphere(&data, setupKind, size - 2, size - 1));
-  }
-  else
-  {
-    graph = new DCGraph(sys, ff, kind, set);
   }
 }
 
@@ -47,24 +39,17 @@ DCLinear::~DCLinear()
 
 void DCLinear::Build(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
 {
-  if(atomSize < 3)
+  std::vector<DCComponent*>& comps =data.prng.randInt(1) ? forward : backward;
+  for(uint i = 0; i < comps.size(); ++i)
   {
-    std::vector<DCComponent*>& comps =data.prng.randInt(1) ? forward : backward;
-    for(uint i = 0; i < comps.size(); ++i)
-    {
-      comps[i]->PrepareNew(newMol, molIndex);
-      comps[i]->BuildNew(newMol, molIndex);
-    }
-
-    for(uint i = 0; i < comps.size(); ++i)
-    {
-      comps[i]->PrepareOld(oldMol, molIndex);
-      comps[i]->BuildOld(oldMol, molIndex);
-    }
+    comps[i]->PrepareNew(newMol, molIndex);
+    comps[i]->BuildNew(newMol, molIndex);
   }
-  else
+  
+  for(uint i = 0; i < comps.size(); ++i)
   {
-    graph->Build(oldMol, newMol, molIndex);
+    comps[i]->PrepareOld(oldMol, molIndex);
+    comps[i]->BuildOld(oldMol, molIndex);
   }
 }
 
@@ -103,9 +88,5 @@ void DCLinear::Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
     comps[1]->BuildNew(newMol, molIndex);
     comps[1]->PrepareOld(oldMol, molIndex);
     comps[1]->BuildOld(oldMol, molIndex);
-  }
-  else
-  {
-    graph->Regrowth(oldMol, newMol, molIndex);
   }
 }
