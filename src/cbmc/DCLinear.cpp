@@ -21,7 +21,7 @@ DCLinear::DCLinear(System& sys, const Forcefield& ff,
   forward.push_back(new DCSingle(&data, 0));
   backward.push_back(new DCSingle(&data, size - 1));
   //second atom of the molecule
-  if(atomSize < 3) {
+  if(atomSize > 1) {
     forward.push_back(new DCOnSphere(&data, setupKind, 1, 0));
     backward.push_back(new DCOnSphere(&data, setupKind, size - 2, size - 1));
   }
@@ -72,7 +72,7 @@ void DCLinear::Regrowth(TrialMol& oldMol, TrialMol& newMol, uint molIndex)
   {
     return Build(oldMol, newMol, molIndex);
   }
-  else if(atomSize < 3)
+  else
   {
     //we only have two atoms in molecule: atom 0, 1
     uint fix = data.prng.randInt(1);
