@@ -2,6 +2,7 @@
 #include <string>
 #include <stdlib.h>
 #include <iostream>
+#include <args.hxx>
 
 std::string EnsembleSearch(std::string filename);
 
