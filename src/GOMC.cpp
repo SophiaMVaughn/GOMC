@@ -28,7 +28,17 @@ int main(int argc, char* argv[])
   }
 
 #ifdef _WIN32
-	// TODO
+	  // Generate the command string based on the ensemble
+  // It should look somewhat close to :
+  // GOMC_CPU_GCMC.exe in.conf
+	std::string Executable_To_Run = "GOMC_CPU_";
+	Executable_To_Run += ensembleType;
+	Exectuable_To_Run += ".exe";
+  Executable_To_Run += " ";
+  Executable_To_Run += filename;
+
+  // Call the system function to actually run the simulation
+	system(Executable_To_Run.c_str());
 #endif
 
 #if defined(__linux__) || defined(__APPLE__)
