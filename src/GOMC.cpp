@@ -5,6 +5,9 @@
 #include <args.hxx>
 
 std::string EnsembleSearch(std::string filename);
+void CPUversion(std::string ensType, std::string fileName) //GOMC::CPUversion? ***************************************
+void GPUfunct(std::string ensType, std::string fileName) //GOMC::GPUfunct?
+//Do we define the parsing flags here or in the main? Is it define the same way as the test case?
 
 int main(int argc, char* argv[])
 {
@@ -27,36 +30,18 @@ int main(int argc, char* argv[])
     std::cerr << "Example: Ensemble GCMC" << std::endl;
     exit(0);
   }
-
-#ifdef _WIN32
-	  // Generate the command string based on the ensemble
-  // It should look somewhat close to :
-  // GOMC_CPU_GCMC.exe in.conf
-	std::string Executable_To_Run = "GOMC_CPU_";
-	Executable_To_Run += ensembleType;
-	Exectuable_To_Run += ".exe";
-  Executable_To_Run += " ";
-  Executable_To_Run += filename;
-
-  // Call the system function to actually run the simulation
-	system(Executable_To_Run.c_str());
-#endif
-
-#if defined(__linux__) || defined(__APPLE__)
-  // Generate the command string based on the ensemble
-  // It should look somewhat close to :
-  // GOMC_CPU_GCMC in.conf
-	std::string Executable_To_Run = "GOMC_CPU_";
-	Executable_To_Run += ensembleType;
-  Executable_To_Run += " ";
-  Executable_To_Run += filename;
-
-  // Call the system function to actually run the simulation
-	system(Executable_To_Run.c_str());
-#endif
+	
+//set the parser here with the input line **************************************************************************
+//if --gpu flag is true, run GPUfunct
+	GPUfunct(ensembleType, filename);
+//if --gpu flag is false, run CPUversion
+	CPUversion(ensembleType, filename);
+//return 0
 	
 	return 0;
 }
+
+
 
 // This function will return the ensemble type by reading the input file
 // @filename: Input file name that passed by user
@@ -88,4 +73,81 @@ std::string EnsembleSearch(std::string filename)
 
   // return "NAN" if we come out of the loop. AKA couldn't find the keyword
   return "NAN";
+}
+
+
+//this will run the CPU compiled version of the ensemble specified
+void CPUversion(std::string ensType, std::string fileName) //GOMC::CPUversion? ******************************
+{
+#ifdef _WIN32
+  // Generate the command string based on the ensemble
+  // It should look somewhat close to :
+  // GOMC_CPU_GCMC.exe in.conf
+  std::string Executable_To_Run = "GOMC_CPU_";
+  Executable_To_Run += ensembleType;
+  Exectuable_To_Run += ".exe";
+  Executable_To_Run += " ";
+  Executable_To_Run += filename;
+
+  // Call the system function to actually run the simulation
+  system(Executable_To_Run.c_str());
+#endif
+
+#if defined(__linux__) || defined(__APPLE__)
+  // Generate the command string based on the ensemble
+  // It should look somewhat close to :
+  // GOMC_CPU_GCMC in.conf
+  std::string Executable_To_Run = "GOMC_CPU_";
+  Executable_To_Run += ensembleType;
+  Executable_To_Run += " ";
+  Executable_To_Run += filename;
+
+  // Call the system function to actually run the simulation
+  system(Executable_To_Run.c_str());
+#endif
+}
+
+
+//this will run the GPU specified version of the executable (with # of threads)
+void GPUfunct(std::string ensType, std::string fileName) //GOMC::GPUfunct? ***********************************
+{
+	
+//if --thread true, record the # in std::string threadInt (or cast the int to string so it can be concatenated) *******************
+//std::string pNum = "+p";
+//pNum += threadInt;
+	
+#ifdef _WIN32
+  // Generate the command string based on the ensemble
+  // It should look somewhat close to :
+  // GOMC_GPU_GCMC.exe +p# in.conf
+  std::string Executable_To_Run = "GOMC_GPU_";
+  Executable_To_Run += ensType;
+  Exectuable_To_Run += ".exe";
+  Executable_To_Run += " ";
+	
+  //Executable_To_Run += pNum; ****************************************
+  //Executable_To_Run += " ";
+	
+  Executable_To_Run += fileName;
+
+  // Call the system function to actually run the simulation
+  system(Executable_To_Run.c_str());
+#endif
+
+#if defined(__linux__) || defined(__APPLE__)
+  // Generate the command string based on the ensemble
+  // It should look somewhat close to :
+  // GOMC_GPU_GCMC +p# in.conf
+  std::string Executable_To_Run = "GOMC_GPU_";
+  Executable_To_Run += ensembleType;
+  Executable_To_Run += " ";
+	
+  //Executable_To_Run += pNum; **************************************
+  //Executable_To_Run += " ";
+	
+  Executable_To_Run += filename;
+
+  // Call the system function to actually run the simulation
+  system(Executable_To_Run.c_str());
+#endif
 }
