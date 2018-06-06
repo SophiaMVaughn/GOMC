@@ -5,8 +5,8 @@
 #include <args.hxx>
 
 std::string EnsembleSearch(std::string filename);
-void CPUversion(std::string ensType, std::string fileName) //GOMC::CPUversion? ***************************************
-void GPUfunct(std::string ensType, std::string fileName) //GOMC::GPUfunct?
+void CPUversion(std::string ensType, std::string fileName); //GOMC::CPUversion? ***************************************
+void GPUfunct(std::string ensType, std::string fileName); //GOMC::GPUfunct?
 //Do we define the parsing flags here or in the main? Is it define the same way as the test case?
 
 int main(int argc, char* argv[])
