@@ -5,9 +5,9 @@
 #include <args.hxx>
 
 std::string EnsembleSearch(std::string filename);
-void CPUversion(std::string ensType, std::string fileName); //GOMC::CPUversion? ***************************************
-void GPUfunct(std::string ensType, std::string fileName); //GOMC::GPUfunct?
-//Do we define the parsing flags here or in the main? Is it define the same way as the test case?
+void CPUversion(std::string ensType, std::string fileName); 
+void GPUfunct(std::string ensType, std::string fileName);
+//Do we define the parsing flags here or in the main? Is it define the same way as the test case? **********************
 
 int main(int argc, char* argv[])
 {
@@ -77,7 +77,7 @@ std::string EnsembleSearch(std::string filename)
 
 
 //this will run the CPU compiled version of the ensemble specified
-void CPUversion(std::string ensType, std::string fileName) //GOMC::CPUversion? ******************************
+void CPUversion(std::string ensType, std::string fileName)
 {
 #ifdef _WIN32
   // Generate the command string based on the ensemble
@@ -109,7 +109,7 @@ void CPUversion(std::string ensType, std::string fileName) //GOMC::CPUversion? *
 
 
 //this will run the GPU specified version of the executable (with # of threads)
-void GPUfunct(std::string ensType, std::string fileName) //GOMC::GPUfunct? ***********************************
+void GPUfunct(std::string ensType, std::string fileName)
 {
 	
 //if --thread true, record the # in std::string threadInt (or cast the int to string so it can be concatenated) *******************
