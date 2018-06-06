@@ -18,6 +18,7 @@ set(sources
    src/FFSetup.cpp
    src/Forcefield.cpp
    src/Geometry.cpp
+   src/GOMC.cpp
    src/HistOutput.cpp
    src/InputFileReader.cpp
    src/Main.cpp
@@ -49,6 +50,7 @@ set(sources
    src/cbmc/TrialMol.cpp)
 
 set(headers
+   src/args.hxx
    src/BlockOutput.h
    src/BoxDimensions.h
    src/BoxDimensionsNonOrth.h
