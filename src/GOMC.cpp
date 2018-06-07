@@ -139,9 +139,10 @@ void CPUversion(std::string ensType, std::string fileName)
 void GPUfunct(std::string ensType, std::string fileName)
 {
 	
-//if --thread true, record the # in std::string threadInt (or cast the int to string so it can be concatenated) *******************
-//std::string pNum = "+p";
-//pNum += threadInt;
+//Get the # of threads from the parser
+//Cast it to a string and make it into a string "+p#"
+std::string pNum = "+p";
+pNum += std::to_string(args::get(thread));
 	
 #ifdef _WIN32
   // Generate the command string based on the ensemble
@@ -152,8 +153,8 @@ void GPUfunct(std::string ensType, std::string fileName)
   Exectuable_To_Run += ".exe";
   Executable_To_Run += " ";
 	
-  //Executable_To_Run += pNum; ****************************************
-  //Executable_To_Run += " ";
+  Executable_To_Run += pNum;
+  Executable_To_Run += " ";
 	
   Executable_To_Run += fileName;
 
@@ -169,8 +170,8 @@ void GPUfunct(std::string ensType, std::string fileName)
   Executable_To_Run += ensembleType;
   Executable_To_Run += " ";
 	
-  //Executable_To_Run += pNum; **************************************
-  //Executable_To_Run += " ";
+  Executable_To_Run += pNum;
+  Executable_To_Run += " ";
 	
   Executable_To_Run += filename;
 
