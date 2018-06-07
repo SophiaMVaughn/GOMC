@@ -17,11 +17,36 @@ int main(int argc, char* argv[])
     std::cerr << "Example: GOMC in.conf" << std::endl;
     exit(0);
   }
-
+	
+args::ArgumentParser parser(“GPU Optimized Monte Carlo.", "");
+args::Flag gpu(parser, "", “The flag to set GPU usage.", {‘g', “gpu"});
+args::ValueFlag<int> thread(parser, "integer", “Set number of threads", {’t’, “thread"});
+			    
+try
+{
+    parser.ParseCLI(argc, argv);
+}
+catch (args::Help)
+{
+        std::cout << parser;
+        return 0;
+}
+catch (args::ParseError e)
+{
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+}
+catch (args::ValidationError e)
+{
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+}
   // Read the input file and find the Ensemble keyword
   // and assign the ensembleType to that value
-  std::string filename(argv[1]);
-	std::string ensembleType = EnsembleSearch(filename);
+std::string filename(argv[1]); //do I test if the flag is true? or am I looking for if it == in.conf? or what?
+std::string ensembleType = EnsembleSearch(filename);
 
   // If the returned value was NAN, it means it couldn't find the ensemble keyword
   // So we will exit here
@@ -33,8 +58,10 @@ int main(int argc, char* argv[])
 	
 //set the parser here with the input line **************************************************************************
 //if --gpu flag is true, run GPUfunct
+if(args::get(gpu)==true)
 	GPUfunct(ensembleType, filename);
 //if --gpu flag is false, run CPUversion
+else
 	CPUversion(ensembleType, filename);
 //return 0
 	
