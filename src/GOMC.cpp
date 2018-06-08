@@ -7,7 +7,6 @@
 std::string EnsembleSearch(std::string filename);
 void CPUversion(std::string ensType, std::string fileName); 
 void GPUfunct(std::string ensType, std::string fileName);
-//Do we define the parsing flags here or in the main? Is it define the same way as the test case? **********************
 
 int main(int argc, char* argv[])
 {
@@ -17,7 +16,8 @@ int main(int argc, char* argv[])
     std::cerr << "Example: GOMC in.conf" << std::endl;
     exit(0);
   }
-	
+
+//define the argument parser and flags
 args::ArgumentParser parser(“GPU Optimized Monte Carlo.", "");
 args::Flag gpu(parser, "", “The flag to set GPU usage.", {‘g', “gpu"});
 args::ValueFlag<int> thread(parser, "integer", “Set number of threads", {’t’, “thread"});
@@ -45,9 +45,17 @@ catch (args::ValidationError e)
 }
   // Read the input file and find the Ensemble keyword
   // and assign the ensembleType to that value
-std::string filename(argv[1]); //do I test if the flag is true? or am I looking for if it == in.conf? or what?
-std::string ensembleType = EnsembleSearch(filename);
+if(args::get(gpu)!=true) //if there is no GPU keyword used, the input file would be in argv[1]
+{
+      std::string filename(argv[1]);
+}
+else //if there IS a GPU keyword used, the input file could either be in argv[1] or argv[2]
+{
+	//****************************************************************************************************************************
+}
+std::string ensembleType = EnsembleSearch(filename); //search the file for the ensemble type keyword
 
+			    
   // If the returned value was NAN, it means it couldn't find the ensemble keyword
   // So we will exit here
   if(ensembleType == "NAN") {
@@ -56,7 +64,6 @@ std::string ensembleType = EnsembleSearch(filename);
     exit(0);
   }
 	
-//set the parser here with the input line **************************************************************************
 //if --gpu flag is true, run GPUfunct
 if(args::get(gpu)==true)
 	GPUfunct(ensembleType, filename);
