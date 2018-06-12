@@ -49,11 +49,14 @@ if(args::get(gpu)!=true) //if there is no GPU keyword used, the input file would
 {
       std::string filename(argv[1]);
 }
-else //if there IS a GPU keyword used, the input file could either be in argv[1] or argv[2]
+else //if there IS a GPU keyword used, the input file could either be in essentially any spot
 {
 	for(int i = 1; i<=4; i++) //max = 4 or 5? (is gomc in.conf -gpu -t 5 = 4 or 5 args?)
 	{
-		if(//1st char is - or a #, or just the word gomc? (Or do we just start at 1? will the 1st word always be gomc?)
+		if(argv[i][0] == 45 || argv[i][]0] //1st char is - or a #, or just the word gomc? (Or do we just start at 1? will the 1st word always be gomc?)
+		{
+		     std::string filename(argv[i]);
+		}
 	}
 	//****************************************************************************************************************************
 }
