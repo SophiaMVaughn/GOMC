@@ -54,7 +54,11 @@ else //if there IS a GPU keyword used, the input file could either be in essenti
 	for(int i = 1; i<=4; i++) //max = 4 or 5? (is gomc in.conf -gpu -t 5 = 4 or 5 args?)
 	{
 		if(argv[i][0] == 45 || argv[i]<= 20) //what is the max # of threads?
-	                                             //1st char is - or a #, or just the word gomc? (Or do we just start at 1? will the 1st word always be gomc?)
+	                                             //ignore if 1st char is - or a #, or just the word gomc? (Or do we just start at 1? will the 1st word always be gomc?)
+		{
+		     continue();
+		}
+		else //if the 1st char is not - and it is not a #, then it is the file name
 		{
 		     std::string filename(argv[i]);
 		}
